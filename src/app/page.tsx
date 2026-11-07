@@ -10,6 +10,7 @@ import { ChapterNav } from "@/components/navigation/ChapterNav";
 import { AudioPlayer } from "@/components/ui/AudioPlayer";
 import { SceneTransition } from "@/components/transitions/SceneTransition";
 import { WorldLoadingIndicator } from "@/components/ui/WorldLoadingIndicator";
+import { CinematicPreloader } from "@/components/ui/CinematicPreloader";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Dynamic scene imports: only World 01 is bundled into the initial page load.
@@ -95,6 +96,7 @@ const GrandFinaleScene = dynamic(
 );
 
 export default function Home() {
+  const [isUniverseReady, setIsUniverseReady] = useState(false);
   const [currentChapter, setCurrentChapter] = useState<ChapterId>("portal");
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [unlockedChapters, setUnlockedChapters] = useState<ChapterId[]>([
@@ -168,6 +170,11 @@ export default function Home() {
 
   return (
     <main className="relative w-full h-[100dvh] overflow-hidden bg-[#10051F]">
+      {/* Real Full-Screen Cinematic Preloader with Weighted Browser Asset Tracking */}
+      {!isUniverseReady && (
+        <CinematicPreloader onLoaded={() => setIsUniverseReady(true)} />
+      )}
+
       {/* Audio Atmosphere Player */}
       <AudioPlayer />
 
