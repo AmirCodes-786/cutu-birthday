@@ -1,6 +1,7 @@
 /**
  * World 05: Dream Island Configuration
- * 6 distinctive interactive landmarks holding personal wishes, dreams and horizons for Ruhi.
+ * 6 heartfelt personal milestones, wishes, and future horizons written from Suhel to Ruhi.
+ * Genuine, loving, warm, and filled with real emotions and emojis.
  */
 
 export interface LandmarkExperience {
@@ -30,133 +31,133 @@ export const dreamsConfig: {
 } = {
   chapter: "CHAPTER 05 · DREAM ISLAND",
   title: "THE FLOATING SANCTUARY OF DREAMS",
-  subtitle: "Every horizon on this island holds a tomorrow I wish to explore with you.",
+  subtitle: "Every little corner here holds a tomorrow I wish to live with you. ♡",
   landmarks: [
     {
       id: "dream-gate",
       number: "01",
       name: "The Dream Gate",
       theme: "gate",
-      subtitle: "The Threshold of Horizons",
-      tagline: "Welcome to Our Floating Sanctuary",
+      subtitle: "Where My Heart Found Home",
+      tagline: "The sweetest blessing in my life ♡",
       emoji: "⛩️",
       accentColor: "#FF0055",
       glowColor: "rgba(255, 0, 85, 0.95)",
       position: { x: 39, y: 37 },
       threePosition: [-1.2, -1.8, 2.2],
       description:
-        "An ancient stone archway woven with luminous vines and twilight blossoms that guards the entrance to the floating island. Here, the weight of the everyday world dissolves into starlight.",
+        "The entrance to our little dream world. Out of billions of people on this planet, my heart found its forever home right beside you. Every road quietly led me to you.",
       story:
-        "Stepping through this gateway is a quiet reminder of how every path led me to you. You brought wonder, warmth, and laughter into my life, turning ordinary days into something extraordinary.",
+        "You know how some people just bring sunshine wherever they go? That's you for me, Ruhi. From the moment you came into my life, everything became brighter, warmer, and so much funnier. Ordinary days stopped feeling ordinary because you were in them. Stepping through this gate is my quiet promise to always choose you, cherish you, and hold your hand through whatever life brings.",
       whisper:
-        "Welcome to the sanctuary created solely to celebrate your birthday, my love. May every step you take here remind you how endlessly cherished you are. ♡",
-      wishPrompt: "Step through the threshold ♡",
-      wishConfirmedText: "Threshold crossed with love! 🕊️",
+        "Happy Birthday my cutie. Welcome to your special world—made with all my love, just to see your face light up today and always. 💖🌸✨",
+      wishPrompt: "Step into our world with me 🫂",
+      wishConfirmedText: "Holding your hand forever! 💖✨",
     },
     {
       id: "dream-cottage",
       number: "02",
       name: "Little Dream Cottage",
       theme: "cottage",
-      subtitle: "Sanctuary of Comfort & Peace",
-      tagline: "A Hearth for Rest and Gentle Days",
+      subtitle: "Our Cozy Safe Haven",
+      tagline: "Warm tea, rainy mornings & quiet cuddles ♡",
       emoji: "🏡",
       accentColor: "#FFB300",
       glowColor: "rgba(255, 179, 0, 0.95)",
       position: { x: 88, y: 40 },
       threePosition: [-0.6, -0.3, 1.8],
       description:
-        "A warm cobblestone cottage nestled gently into the lush hillside, its amber windows glowing softly under a drifting plume of sweet cedarwood smoke.",
+        "A warm little hillside home with amber glowing windows, soft blankets, and the scent of cinnamon tea. A place where you can kick off your shoes and just breathe.",
       story:
-        "Imagine quiet rainy mornings with nowhere we have to rush, mugs of warm tea cradled between our hands, the soothing sound of raindrops against the windowpane, and you curled up reading your favorite book beside me.",
+        "This is my favorite dream of us—waking up on a quiet rainy morning with zero alarms and nowhere to rush. Just two big mugs of hot tea cradled in our hands, listening to the rain tap against the window while you curl up right next to me, completely cozy and at peace. Talking about everything and nothing until hours just slip away.",
       whisper:
-        "My birthday wish for you is boundless peace of mind: that you always have a place where you can exhale completely, be your silly, authentic self, and feel totally safe. ☕🍯",
-      wishPrompt: "Send a wish for comfort & peace 🏡",
-      wishConfirmedText: "Comfort & warmth blessed! 💛",
+        "My biggest wish for you this year is pure peace of mind. That you always have me as your safe place where you can be 100% your silly, beautiful, unmasked self without ever worrying. You are safe with me, always. ☕🍯💛",
+      wishPrompt: "Wish for cozy mornings & peace 🏡",
+      wishConfirmedText: "Warm hugs & cozy cuddles saved! ☕💛",
     },
     {
       id: "wishing-tree",
       number: "03",
       name: "The Wishing Tree",
       theme: "tree",
-      subtitle: "Roots of Devotion",
-      tagline: "Every Blossom Holds a Birthday Wish",
+      subtitle: "A Thousand Birthday Prayers",
+      tagline: "For your health, happiness & radiant smile ♡",
       emoji: "🌸",
       accentColor: "#FF1493",
       glowColor: "rgba(255, 20, 147, 0.95)",
       position: { x: 77, y: 19 },
       threePosition: [0.5, 1.1, 1.6],
       description:
-        "The ancient weeping cherry blossom tree standing crowned at the highest plateau of the island. Thousands of luminous pink petals fall gently in the sunset breeze like whispered prayers.",
+        "A gorgeous blooming pink sakura tree on the highest cliff, with soft petals floating gently in the evening breeze. Every single petal holds a birthday prayer for you.",
       story:
-        "For centuries, travelers would tie silk ribbons to these branches, believing that the mountain winds would carry their truest wishes straight into the cosmos. Today, every single blossom on this tree bears a prayer for your health, your laughter, and your radiant spirit.",
+        "If I could collect every good thing this universe has to offer and wrap it up for your birthday, I would do it in a heartbeat. You have this rare, pure heart that gives so much love and care to everyone around you. Today, every petal falling from this tree carries my heartfelt prayer for your health, your endless laughter, your peace, and all your secret dreams coming true.",
       whisper:
-        "Happy Birthday, Ruhi. May the universe return to you a hundredfold the tenderness, warmth, and quiet light you bring to everyone around you. 🌸✨",
-      wishPrompt: "Tie a birthday wish ribbon 🎀",
-      wishConfirmedText: "Wish tied to the sacred tree! 🌸",
+        "Ruhi, you deserve every ounce of sweetness life has to offer. May this year bring you so much joy that your cheeks hurt from smiling. Happy Birthday, my star. 🌸🎀💕",
+      wishPrompt: "Tie your birthday ribbon 🎀",
+      wishConfirmedText: "A million blessings sent to you! 🌸✨",
     },
     {
       id: "lake-of-dreams",
       number: "04",
       name: "Lake of Dreams",
       theme: "lake",
-      subtitle: "Cascading Waters & Horizons",
-      tagline: "Reflecting Uncharted Adventures",
+      subtitle: "Our Uncharted Adventures",
+      tagline: "Late night drives, road trips & getting lost together ♡",
       emoji: "🌊",
       accentColor: "#00E5FF",
       glowColor: "rgba(0, 229, 255, 0.95)",
       position: { x: 31, y: 53 },
       threePosition: [-2.2, -1.2, 2.0],
       description:
-        "A crystal-clear alpine lagoon catching the tumbling celestial waterfalls. The surface of the water ripples gently, reflecting distant coastlines, sunlit mountains, and unwritten journeys.",
+        "A shimmering crystal lake beneath cascading waterfalls, reflecting starry night skies and distant open horizons. The beginning of all our adventures.",
       story:
-        "The world is vast, filled with winding coastal highways, quaint cobblestone alleyways, quiet mountain lakes, and lively night markets waiting for us. There is nobody else I would rather pack a bag with and get delightfully lost with than you.",
+        "There is an entire world out there—scenic highways, mountain viewpoints, secret coffee spots, midnight airport terminals, and beach sunsets. And honestly, there is nobody else on earth I'd rather pack a messy suitcase with and get delightfully lost with than you. Even if we take a wrong turn, as long as your hand is in mine and your playlist is playing, it's the best trip ever.",
       whisper:
-        "Here's to all our upcoming road trips, passport stamps, late-night hotel room giggles, and breathtaking sunsets yet to be shared. ✈️🗺️🌊",
-      wishPrompt: "Cast a wish into the waters 🌊",
-      wishConfirmedText: "Adventure ripple sent! 💙",
+        "Here's to all our upcoming road trips, late-night hotel room laughter, sharing snacks in the passenger seat, and watching sunsets by the water. The best adventures are still ahead of us! 🚗✈️🌊💫",
+      wishPrompt: "Wish for our next road trip 🌊",
+      wishConfirmedText: "Road trip promise locked in! 💙🚙",
     },
     {
       id: "star-observatory",
       number: "05",
       name: "The Star Observatory",
       theme: "observatory",
-      subtitle: "Panorama of Tomorrow",
-      tagline: "Looking Out Into Our Future",
+      subtitle: "Looking Into Our Future",
+      tagline: "Cheering for you in everything you do ♡",
       emoji: "🏛️",
       accentColor: "#B026FF",
       glowColor: "rgba(176, 38, 255, 0.95)",
       position: { x: 63, y: 31 },
       threePosition: [2.1, -0.1, 1.9],
       description:
-        "An elegant white marble pavilion and astrolabe terrace perched high above the cliff's edge, offering an unobstructed panoramic view where the sunset clouds melt into the starlit void.",
+        "A glowing marble pavilion looking out into the starry sky where the sunset clouds melt into stars. A quiet perch to look ahead at all the amazing things you are going to achieve.",
       story:
-        "Looking out from this terrace, the future isn't something intimidating or uncertain—it is an open canvas of promise. Whatever life brings, knowing that I get to stand beside you, support your ambitions, and cheer for your every victory makes every tomorrow something to look forward to.",
+        "Whenever you talk about your goals and what you want to achieve, your eyes light up in the most captivating way. You are so hardworking, so capable, and so brilliant. Never doubt how strong you are. Whatever mountains you want to climb, whatever challenges come up, remember you will never have to face them alone. I will always be in the front row cheering the loudest for you.",
       whisper:
-        "I believe in your talent, your sharp mind, and your beautiful resilience. No matter how high you reach for the stars, I will always be right here cheering for you. 👑🔭⭐",
-      wishPrompt: "Gaze into the starlit future 🔭",
-      wishConfirmedText: "Starlit promise sealed! ✨",
+        "I am so proud of the woman you are, Ruhi. Dream as big as you want—I'll be right beside you every step of the way, believing in you even when you forget to believe in yourself. 👑⭐✨",
+      wishPrompt: "Make a wish for your future 🔭",
+      wishConfirmedText: "Always cheering for you, my star! ⭐👑",
     },
     {
       id: "secret-horizon",
       number: "06",
       name: "The Secret Horizon",
       theme: "horizon",
-      subtitle: "The Final Ascent",
-      tagline: "Where Dreams Awaken",
+      subtitle: "The Final Birthday Surprise",
+      tagline: "Take my hand, the party is waiting for you! 🎂",
       emoji: "🌅",
       accentColor: "#FF5722",
       glowColor: "rgba(255, 87, 34, 0.95)",
       position: { x: 12, y: 33 },
       threePosition: [3.0, 1.2, 1.4],
       description:
-        "A mystical floating satellite island hovering softly in the twilight haze, connected only by drifting stardust and rising glowing sky lanterns.",
+        "A sunset sanctuary where floating sky lanterns rise into twilight, carrying the glow of our dreams into the night sky. The gateway to your birthday celebration.",
       story:
-        "This hidden horizon marks the culmination of our floating sanctuary. Beyond this sunset mist lies the grand birthday celebration waiting just for you—a night of music, birthday cake, and heartfelt celebration.",
+        "You've explored every little corner of our Dream Island, but the night is just getting started! Just over this sunset horizon, I've prepared a special birthday celebration with your cake, candles, glowing lanterns, and music playing just for you. Today is all about you, Ruhi.",
       whisper:
-        "You have uncovered all horizons on the island. Now, take my hand as we step forward into your Grand Birthday Finale. 🎂✨💖",
-      wishPrompt: "Ignite the final lantern 🏮",
-      wishConfirmedText: "Grand Finale unlocked! 🎂",
+        "You are the sweetest, most special part of my universe. Now close your eyes, make your biggest wish, and let's go celebrate your birthday together! 🎂💖✨🎉",
+      wishPrompt: "Light the birthday lantern 🏮",
+      wishConfirmedText: "Ready for your Birthday Cake! 🎂💖",
     },
   ],
 };

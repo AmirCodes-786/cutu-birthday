@@ -1,6 +1,7 @@
 /**
  * World 03: Memory Galaxy Configuration
  * Personal photos of Ruhi and Suhel.
+ * Uses high-performance WebP optimized photos for instant loading.
  */
 
 export interface MemoryItem {
@@ -27,7 +28,7 @@ export const memoriesConfig: {
       id: "mem-1",
       title: "Our Starlit Journey Begins",
       date: "Cherished Moment",
-      image: "/images/memories/image-1.jpeg",
+      image: "/images/memories/optimized/image-1.webp",
       aspectRatio: 0.5625, // 720 x 1280 portrait
       caption: "The start of countless unforgettable smiles together.",
       description:
@@ -37,7 +38,7 @@ export const memoriesConfig: {
       id: "mem-2",
       title: "Radiant Happiness",
       date: "Golden Memory",
-      image: "/images/memories/image-2.jpeg",
+      image: "/images/memories/optimized/image-2.webp",
       aspectRatio: 0.5625, // 720 x 1280 portrait
       caption: "That genuine, effortless smile that always brightens my day.",
       description:
@@ -47,7 +48,7 @@ export const memoriesConfig: {
       id: "mem-3",
       title: "Unforgettable Together",
       date: "Special Day",
-      image: "/images/memories/image-3.jpeg",
+      image: "/images/memories/optimized/image-3.webp",
       aspectRatio: 1.333, // 1280 x 960 landscape
       caption: "Lost in our own little world where time stands still.",
       description:
@@ -57,7 +58,7 @@ export const memoriesConfig: {
       id: "mem-4",
       title: "Pure Laughter & Fun",
       date: "Sweet Memory",
-      image: "/images/memories/image-4.jpeg",
+      image: "/images/memories/optimized/image-4.webp",
       aspectRatio: 0.748, // 1198 x 1600 portrait
       caption: "The glances, the jokes, and the happiness only we share.",
       description:
@@ -67,7 +68,7 @@ export const memoriesConfig: {
       id: "mem-5",
       title: "Heartfelt Moments",
       date: "Precious Memory",
-      image: "/images/memories/image-5.jpeg",
+      image: "/images/memories/optimized/image-5.webp",
       aspectRatio: 1.777, // 1280 x 720 landscape
       caption: "Quiet comfort, knowing you are by my side.",
       description:
@@ -77,7 +78,7 @@ export const memoriesConfig: {
       id: "mem-6",
       title: "Forever & Always",
       date: "Our Constellation",
-      image: "/images/memories/image-6.jpeg",
+      image: "/images/memories/optimized/image-6.webp",
       aspectRatio: 0.5625, // 720 x 1280 portrait
       caption: "Here is to celebrating you today and every single day ahead.",
       description:

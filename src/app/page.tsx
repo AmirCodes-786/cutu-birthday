@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { ChapterId } from "@/config/siteConfig";
+import { ASSETS } from "@/config/assetsConfig";
+import { memoriesConfig } from "@/config/memoriesConfig";
 import { SecretPortalScene } from "@/scenes/SecretPortal/SecretPortalScene";
 import { ChapterNav } from "@/components/navigation/ChapterNav";
 import { AudioPlayer } from "@/components/ui/AudioPlayer";
@@ -103,6 +105,37 @@ export default function Home() {
     "island",
     "finale",
   ]);
+
+  // Intelligent Background Asset Preloader:
+  // Pre-caches upcoming world artworks & memory photos during idle browser time
+  // so that world navigation and 3D constellation frames load instantaneously!
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const assetsToPreload = [
+      ASSETS.portal.heartPortalRef,
+      ASSETS.portal.cosmicNebula,
+      ASSETS.letter.stillLife,
+      ASSETS.galaxy.cosmicAtmosphere,
+      ASSETS.garden.roseGazebo,
+      ASSETS.island.floatingIsland,
+      ASSETS.finale.birthdayCelebration,
+      ...memoriesConfig.memories.map((m) => m.image),
+    ];
+
+    const preload = () => {
+      assetsToPreload.forEach((src) => {
+        const img = new window.Image();
+        img.src = src;
+      });
+    };
+
+    if ("requestIdleCallback" in window) {
+      window.requestIdleCallback(preload);
+    } else {
+      setTimeout(preload, 800);
+    }
+  }, []);
 
   const handlePortalEnter = () => {
     setIsTransitioning(true);
