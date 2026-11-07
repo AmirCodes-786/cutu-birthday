@@ -19,13 +19,14 @@ export function AudioPlayer() {
     if (typeof window === "undefined") return null;
 
     const audio = new Audio();
-    audio.preload = "none";
+    audio.preload = "auto";
+    audio.crossOrigin = "anonymous";
     audio.loop = true;
     audio.volume = isMuted ? 0 : volume;
 
     const handleCanPlay = () => setHasAudioFile(true);
     const handleError = () => {
-      if (audio.src.includes(audioConfig.trackSrc) && audioConfig.fallbackTrackSrc) {
+      if (audioConfig.fallbackTrackSrc && audio.src.includes(audioConfig.trackSrc)) {
         audio.src = audioConfig.fallbackTrackSrc;
         audio.load();
       } else {
