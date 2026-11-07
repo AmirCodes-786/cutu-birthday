@@ -1,69 +1,240 @@
-import Image from "next/image";
+"use client";
+
+import React, { useState } from "react";
+import dynamic from "next/dynamic";
+import { ChapterId } from "@/config/siteConfig";
+import { SecretPortalScene } from "@/scenes/SecretPortal/SecretPortalScene";
+import { ChapterNav } from "@/components/navigation/ChapterNav";
+import { AudioPlayer } from "@/components/ui/AudioPlayer";
+import { SceneTransition } from "@/components/transitions/SceneTransition";
+import { WorldLoadingIndicator } from "@/components/ui/WorldLoadingIndicator";
+import { motion, AnimatePresence } from "framer-motion";
+
+// Dynamic scene imports: only World 01 is bundled into the initial page load.
+// Worlds 02-06 and their respective 3D assets/materials are loaded on-demand when visited.
+const LoveLetterScene = dynamic(
+  () =>
+    import("@/scenes/LoveLetter/LoveLetterScene").then(
+      (mod) => mod.LoveLetterScene
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <WorldLoadingIndicator
+        worldTitle="Chapter 02 · The Love Letter"
+        subtitle="Unfolding antique parchment..."
+      />
+    ),
+  }
+);
+
+const MemoryGalaxyScene = dynamic(
+  () =>
+    import("@/scenes/MemoryGalaxy/MemoryGalaxyScene").then(
+      (mod) => mod.MemoryGalaxyScene
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <WorldLoadingIndicator
+        worldTitle="Chapter 03 · The Memory Galaxy"
+        subtitle="Aligning celestial constellations..."
+      />
+    ),
+  }
+);
+
+const EnchantedGardenScene = dynamic(
+  () =>
+    import("@/scenes/EnchantedGarden/EnchantedGardenScene").then(
+      (mod) => mod.EnchantedGardenScene
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <WorldLoadingIndicator
+        worldTitle="Chapter 04 · The Enchanted Garden"
+        subtitle="Awakening midnight blossoms..."
+      />
+    ),
+  }
+);
+
+const DreamIslandScene = dynamic(
+  () =>
+    import("@/scenes/DreamIsland/DreamIslandScene").then(
+      (mod) => mod.DreamIslandScene
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <WorldLoadingIndicator
+        worldTitle="Chapter 05 · The Dream Island"
+        subtitle="Approaching twilight sanctuary..."
+      />
+    ),
+  }
+);
+
+const GrandFinaleScene = dynamic(
+  () =>
+    import("@/scenes/GrandFinale/GrandFinaleScene").then(
+      (mod) => mod.GrandFinaleScene
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <WorldLoadingIndicator
+        worldTitle="Chapter 06 · The Grand Finale"
+        subtitle="Illuminating birthday celebration..."
+      />
+    ),
+  }
+);
 
 export default function Home() {
+  const [currentChapter, setCurrentChapter] = useState<ChapterId>("portal");
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [unlockedChapters, setUnlockedChapters] = useState<ChapterId[]>([
+    "portal",
+    "letter",
+    "galaxy",
+    "garden",
+    "island",
+    "finale",
+  ]);
+
+  const handlePortalEnter = () => {
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setUnlockedChapters((prev) =>
+        prev.includes("letter") ? prev : [...prev, "letter"]
+      );
+      setCurrentChapter("letter");
+      setIsTransitioning(false);
+    }, 1200);
+  };
+
+  const handleSelectChapter = (id: ChapterId) => {
+    if (id === currentChapter) return;
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setUnlockedChapters((prev) => (prev.includes(id) ? prev : [...prev, id]));
+      setCurrentChapter(id);
+      setIsTransitioning(false);
+    }, 700);
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <main className="relative w-full h-[100dvh] overflow-hidden bg-[#10051F]">
+      {/* Audio Atmosphere Player */}
+      <AudioPlayer />
+
+      {/* Chapter Views — Unmounts inactive scenes automatically on transition */}
+      <AnimatePresence mode="wait">
+        {currentChapter === "portal" && (
+          <motion.div
+            key="portal-scene"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8 }}
+            className="w-full h-full"
           >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
+            <SecretPortalScene onEnterUniverse={handlePortalEnter} />
+          </motion.div>
+        )}
+
+        {currentChapter === "letter" && (
+          <motion.div
+            key="letter-scene"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8 }}
+            className="w-full h-full"
+          >
+            <LoveLetterScene
+              onNextChapter={() => handleSelectChapter("galaxy")}
+              onPrevChapter={() => handleSelectChapter("portal")}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          </motion.div>
+        )}
+
+        {currentChapter === "galaxy" && (
+          <motion.div
+            key="galaxy-scene"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8 }}
+            className="w-full h-full"
           >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+            <MemoryGalaxyScene
+              onNextChapter={() => handleSelectChapter("garden")}
+              onPrevChapter={() => handleSelectChapter("letter")}
+            />
+          </motion.div>
+        )}
+
+        {currentChapter === "garden" && (
+          <motion.div
+            key="garden-scene"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8 }}
+            className="w-full h-full"
+          >
+            <EnchantedGardenScene
+              onNextChapter={() => handleSelectChapter("island")}
+              onPrevChapter={() => handleSelectChapter("galaxy")}
+            />
+          </motion.div>
+        )}
+
+        {currentChapter === "island" && (
+          <motion.div
+            key="island-scene"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8 }}
+            className="w-full h-full"
+          >
+            <DreamIslandScene
+              onNextChapter={() => handleSelectChapter("finale")}
+              onPrevChapter={() => handleSelectChapter("garden")}
+            />
+          </motion.div>
+        )}
+
+        {currentChapter === "finale" && (
+          <motion.div
+            key="finale-scene"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8 }}
+            className="w-full h-full"
+          >
+            <GrandFinaleScene
+              onPrevChapter={() => handleSelectChapter("island")}
+              onRestartJourney={() => handleSelectChapter("portal")}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Global Celestial Chapter Navigation */}
+      <ChapterNav
+        currentChapter={currentChapter}
+        onSelectChapter={handleSelectChapter}
+        unlockedChapters={unlockedChapters}
+      />
+
+      {/* Cinematic Transition Layer */}
+      <SceneTransition isTransitioning={isTransitioning} />
+    </main>
   );
 }

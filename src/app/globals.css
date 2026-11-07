@@ -1,26 +1,110 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Cinematic Master Palette Design Tokens */
+  --color-midnight-plum: #10051F;
+  --color-deep-space: #180B2E;
+  --color-royal-violet: #392057;
+  --color-nebula-purple: #66318D;
+  --color-amethyst: #9560C5;
+  --color-electric-orchid: #D95BCB;
+  --color-romantic-pink: #F28DBB;
+  --color-blush-pink: #F8B7D0;
+  --color-rose-gold: #D7A0A8;
+  --color-champagne-gold: #F5C77E;
+  --color-soft-ivory: #FFF1E6;
+  --color-burgundy: #45192F;
+
+  --background: var(--color-midnight-plum);
+  --foreground: var(--color-soft-ivory);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-midnight-plum: var(--color-midnight-plum);
+  --color-deep-space: var(--color-deep-space);
+  --color-royal-violet: var(--color-royal-violet);
+  --color-nebula-purple: var(--color-nebula-purple);
+  --color-amethyst: var(--color-amethyst);
+  --color-electric-orchid: var(--color-electric-orchid);
+  --color-romantic-pink: var(--color-romantic-pink);
+  --color-blush-pink: var(--color-blush-pink);
+  --color-rose-gold: var(--color-rose-gold);
+  --color-champagne-gold: var(--color-champagne-gold);
+  --color-soft-ivory: var(--color-soft-ivory);
+  --color-burgundy: var(--color-burgundy);
+
+  --font-serif: "Cinzel", "Cormorant Garamond", "Playfair Display", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-script: "Great Vibes", "Alex Brush", cursive;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--color-midnight-plum);
+  color: var(--color-soft-ivory);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #10051F;
+}
+::-webkit-scrollbar-thumb {
+  background: #392057;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #66318D;
+}
+
+/* Hide scrollbar utility for clean touch carousels */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+/* Glowing text and atmospheric accents */
+.text-glow-gold {
+  text-shadow: 0 0 12px rgba(245, 199, 126, 0.45), 0 0 24px rgba(245, 199, 126, 0.2);
+}
+
+.text-glow-pink {
+  text-shadow: 0 0 12px rgba(242, 141, 187, 0.5), 0 0 28px rgba(217, 91, 203, 0.25);
+}
+
+.box-glow-gold {
+  box-shadow: 0 0 25px rgba(245, 199, 126, 0.2), inset 0 0 15px rgba(245, 199, 126, 0.1);
+}
+
+.box-glow-portal {
+  box-shadow: 0 0 35px rgba(217, 91, 203, 0.35), 0 0 70px rgba(102, 49, 141, 0.25);
+}
+
+/* Glass panel styling that is restrained and cinematic, not generic */
+.cinematic-glass {
+  background: linear-gradient(135deg, rgba(24, 11, 46, 0.72) 0%, rgba(57, 32, 87, 0.5) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(215, 160, 168, 0.18);
 }
