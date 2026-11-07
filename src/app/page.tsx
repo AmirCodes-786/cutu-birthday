@@ -124,16 +124,24 @@ export default function Home() {
     ];
 
     const preload = () => {
+      // 1. Preload high-fidelity WebP artwork & memory textures into browser cache
       assetsToPreload.forEach((src) => {
         const img = new window.Image();
         img.src = src;
       });
+
+      // 2. Pre-warm upcoming scene JavaScript chunks during idle time for instant mobile navigation
+      import("@/scenes/LoveLetter/LoveLetterScene");
+      import("@/scenes/MemoryGalaxy/MemoryGalaxyScene");
+      import("@/scenes/EnchantedGarden/EnchantedGardenScene");
+      import("@/scenes/DreamIsland/DreamIslandScene");
+      import("@/scenes/GrandFinale/GrandFinaleScene");
     };
 
     if ("requestIdleCallback" in window) {
       window.requestIdleCallback(preload);
     } else {
-      setTimeout(preload, 800);
+      setTimeout(preload, 500);
     }
   }, []);
 
@@ -145,7 +153,7 @@ export default function Home() {
       );
       setCurrentChapter("letter");
       setIsTransitioning(false);
-    }, 1200);
+    }, 450);
   };
 
   const handleSelectChapter = (id: ChapterId) => {
@@ -155,7 +163,7 @@ export default function Home() {
       setUnlockedChapters((prev) => (prev.includes(id) ? prev : [...prev, id]));
       setCurrentChapter(id);
       setIsTransitioning(false);
-    }, 700);
+    }, 320);
   };
 
   return (

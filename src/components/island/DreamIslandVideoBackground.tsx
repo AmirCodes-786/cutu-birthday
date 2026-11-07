@@ -139,7 +139,12 @@ export function DreamIslandVideoBackground({
 
     video.defaultMuted = true;
     video.muted = true;
+    video.volume = 0;
     video.playsInline = true;
+    video.setAttribute("muted", "");
+    video.setAttribute("playsinline", "");
+    video.setAttribute("webkit-playsinline", "true");
+    video.setAttribute("x5-playsinline", "true");
 
     if (!isPaused) {
       const playPromise = video.play();
@@ -149,7 +154,7 @@ export function DreamIslandVideoBackground({
             setVideoLoaded(true);
           })
           .catch((err) => {
-            console.log("Autoplay deferred by browser:", err);
+            console.log("Mobile autoplay waiting for user tap:", err);
           });
       }
     } else {
@@ -164,7 +169,15 @@ export function DreamIslandVideoBackground({
       if (node) {
         node.defaultMuted = true;
         node.muted = true;
+        node.volume = 0;
         node.playsInline = true;
+        node.setAttribute("muted", "");
+        node.setAttribute("playsinline", "");
+        node.setAttribute("webkit-playsinline", "true");
+        node.setAttribute("x5-playsinline", "true");
+
+        // Force mobile browsers to immediately buffer stream metadata
+        node.load();
         startVideoPlayback();
       }
     },
@@ -180,23 +193,32 @@ export function DreamIslandVideoBackground({
   useEffect(() => {
     const handleFirstTouch = () => {
       const video = videoRef.current;
-      if (video && !isPaused && video.paused) {
+      if (video && !isPaused) {
         video.defaultMuted = true;
         video.muted = true;
-        video
-          .play()
-          .then(() => setVideoLoaded(true))
-          .catch(() => {});
+        video.volume = 0;
+        video.setAttribute("muted", "");
+        video.setAttribute("playsinline", "");
+        video.setAttribute("webkit-playsinline", "true");
+
+        if (video.paused || video.readyState < 2) {
+          video
+            .play()
+            .then(() => setVideoLoaded(true))
+            .catch(() => {});
+        }
       }
     };
 
     window.addEventListener("pointerdown", handleFirstTouch, { passive: true });
     window.addEventListener("touchstart", handleFirstTouch, { passive: true });
+    window.addEventListener("touchend", handleFirstTouch, { passive: true });
     window.addEventListener("click", handleFirstTouch, { passive: true });
 
     return () => {
       window.removeEventListener("pointerdown", handleFirstTouch);
       window.removeEventListener("touchstart", handleFirstTouch);
+      window.removeEventListener("touchend", handleFirstTouch);
       window.removeEventListener("click", handleFirstTouch);
     };
   }, [isPaused]);
@@ -239,6 +261,7 @@ export function DreamIslandVideoBackground({
           onDragStart={() => {
             setIsDragging(true);
             if (onUserPan) onUserPan();
+            startVideoPlayback();
           }}
           onDragEnd={() => setIsDragging(false)}
           style={{
@@ -291,6 +314,11 @@ export function DreamIslandVideoBackground({
             }}
             onPlaying={() => {
               setVideoLoaded(true);
+            }}
+            onTimeUpdate={() => {
+              if (videoRef.current && videoRef.current.currentTime > 0) {
+                setVideoLoaded(true);
+              }
             }}
           />
 
