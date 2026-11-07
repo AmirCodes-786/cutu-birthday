@@ -42,8 +42,13 @@ function IslandAmbientCameraRig({ isMobile }: { isMobile: boolean }) {
  */
 export function DreamIslandAtmosphere({ isMobile }: DreamIslandAtmosphereProps) {
   return (
-    <div className="absolute inset-0 w-full h-full pointer-events-none z-10">
+    <div
+      className="absolute inset-0 w-full h-full pointer-events-none z-[5]"
+      style={{ pointerEvents: "none" }}
+    >
       <Canvas
+        className="pointer-events-none"
+        style={{ pointerEvents: "none" }}
         camera={{ position: [0, 0, 5], fov: isMobile ? 55 : 48 }}
         gl={{
           antialias: true,

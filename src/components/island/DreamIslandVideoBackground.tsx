@@ -132,13 +132,79 @@ export function DreamIslandVideoBackground({
     }
   }, [focusedLandmarkX, bounds.isPannable, bounds.width, bounds.containerWidth, bounds.minPanX, motionPanX]);
 
-  // Handle Play/Pause, Visibility Change & Reduced Motion
-  useEffect(() => {
+  // Video element ref callback & robust playback controller
+  const startVideoPlayback = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
 
+    video.defaultMuted = true;
     video.muted = true;
-    video.volume = 0;
+    video.playsInline = true;
+
+    if (!isPaused) {
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setVideoLoaded(true);
+          })
+          .catch((err) => {
+            console.log("Autoplay deferred by browser:", err);
+          });
+      }
+    } else {
+      video.pause();
+    }
+  }, [isPaused]);
+
+  // Ref callback ensures properties are bound the exact moment node mounts
+  const setVideoNode = useCallback(
+    (node: HTMLVideoElement | null) => {
+      videoRef.current = node;
+      if (node) {
+        node.defaultMuted = true;
+        node.muted = true;
+        node.playsInline = true;
+        startVideoPlayback();
+      }
+    },
+    [startVideoPlayback]
+  );
+
+  // Re-evaluate playback whenever isPaused changes or bounds initialize
+  useEffect(() => {
+    startVideoPlayback();
+  }, [startVideoPlayback, bounds.width]);
+
+  // Universal first-touch unlock (unblocks mobile Safari and Chrome strict policies)
+  useEffect(() => {
+    const handleFirstTouch = () => {
+      const video = videoRef.current;
+      if (video && !isPaused && video.paused) {
+        video.defaultMuted = true;
+        video.muted = true;
+        video
+          .play()
+          .then(() => setVideoLoaded(true))
+          .catch(() => {});
+      }
+    };
+
+    window.addEventListener("pointerdown", handleFirstTouch, { passive: true });
+    window.addEventListener("touchstart", handleFirstTouch, { passive: true });
+    window.addEventListener("click", handleFirstTouch, { passive: true });
+
+    return () => {
+      window.removeEventListener("pointerdown", handleFirstTouch);
+      window.removeEventListener("touchstart", handleFirstTouch);
+      window.removeEventListener("click", handleFirstTouch);
+    };
+  }, [isPaused]);
+
+  // Handle Tab Visibility Change & Reduced Motion
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
 
     const handleVisibility = () => {
       const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -146,25 +212,20 @@ export function DreamIslandVideoBackground({
       if (document.hidden || isPaused || prefersReducedMotion) {
         if (!video.paused) video.pause();
       } else {
-        if (video.paused) {
-          video.play().catch(() => {});
-        }
+        startVideoPlayback();
       }
     };
 
     document.addEventListener("visibilitychange", handleVisibility);
-    handleVisibility();
-
     return () => {
       document.removeEventListener("visibilitychange", handleVisibility);
-      video.pause();
     };
-  }, [isPaused]);
+  }, [isPaused, startVideoPlayback]);
 
   return (
     <div
       ref={containerRef}
-      className="absolute inset-0 w-full h-full overflow-hidden bg-[#10051F] select-none"
+      className="absolute inset-0 w-full h-full overflow-hidden bg-[#10051F] select-none z-0"
     >
       {/* Pannable Unified Video & Hotspots Stage */}
       {bounds.width > 0 && (
@@ -196,19 +257,19 @@ export function DreamIslandVideoBackground({
         >
           {/* Instant Lightweight WebP Backdrop Poster */}
           <div
-            className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ${
-              videoLoaded ? "opacity-0 pointer-events-none" : "opacity-100"
+            className={`absolute inset-0 w-full h-full transition-opacity duration-700 pointer-events-none z-0 ${
+              videoLoaded ? "opacity-0" : "opacity-100"
             }`}
             style={{
               backgroundImage: `url('${ASSETS.island.floatingIsland}')`,
-              backgroundSize: "100% 100%",
+              backgroundSize: "cover",
               backgroundPosition: "center center",
             }}
           />
 
           {/* Single High-Performance Looping Video Player */}
           <video
-            ref={videoRef}
+            ref={setVideoNode}
             src={ASSETS.island.video}
             poster={ASSETS.island.floatingIsland}
             autoPlay
@@ -216,15 +277,25 @@ export function DreamIslandVideoBackground({
             muted
             playsInline
             preload="auto"
-            className="absolute inset-0 w-full h-full object-fill pointer-events-none"
+            aria-hidden="true"
+            disablePictureInPicture
+            disableRemotePlayback
+            className="absolute inset-0 w-full h-full object-cover pointer-events-none z-0"
+            onCanPlay={() => {
+              startVideoPlayback();
+            }}
             onLoadedData={() => {
               setVideoLoaded(true);
+              startVideoPlayback();
               updateVideoBounds();
+            }}
+            onPlaying={() => {
+              setVideoLoaded(true);
             }}
           />
 
-          {/* Video-Anchored Hotspots (100% mathematically locked to video pixels) */}
-          <div className="absolute inset-0 w-full h-full pointer-events-none">
+          {/* Video-Anchored Hotspots (100% mathematically locked to video pixels, elevated above overlays) */}
+          <div className="absolute inset-0 w-full h-full pointer-events-none z-20">
             {children && children(bounds)}
           </div>
         </motion.div>

@@ -265,7 +265,9 @@ export function DreamIslandScene({
           LAYER 2: DELICATE AMBIENT ATMOSPHERIC PARTICLES
           Translucent cherry blossom petals & golden stardust
          ======================================================== */}
-      <DreamIslandAtmosphere isMobile={isMobile} />
+      <div className="absolute inset-0 z-[5] pointer-events-none" style={{ pointerEvents: "none" }}>
+        <DreamIslandAtmosphere isMobile={isMobile} />
+      </div>
 
       {/* Gentle Floating Swipe Hint on Mobile */}
       <AnimatePresence>

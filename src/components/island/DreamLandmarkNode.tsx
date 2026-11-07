@@ -161,11 +161,21 @@ export function DreamLandmarkNode({
 
       {/* Main High-Contrast Radiant Jewel Beacon */}
       <button
-        onClick={() => onSelect(landmark)}
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect(landmark);
+        }}
+        onPointerDown={(e) => {
+          e.stopPropagation();
+        }}
+        onTouchStart={(e) => {
+          e.stopPropagation();
+        }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         aria-label={`Explore Horizon ${landmark.number}: ${landmark.name}`}
-        className="relative group p-2 focus:outline-none cursor-pointer select-none flex items-center justify-center"
+        className="relative group p-3 focus:outline-none cursor-pointer select-none flex items-center justify-center pointer-events-auto touch-manipulation z-30"
       >
         {/* Layer 1: Continuous Sonar Radar Ping Wave in Vivid Jewel Color */}
         <span
