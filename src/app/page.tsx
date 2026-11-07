@@ -1,99 +1,18 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import dynamic from "next/dynamic";
+import React, { useState } from "react";
 import { ChapterId } from "@/config/siteConfig";
-import { ASSETS } from "@/config/assetsConfig";
-import { memoriesConfig } from "@/config/memoriesConfig";
 import { SecretPortalScene } from "@/scenes/SecretPortal/SecretPortalScene";
+import { LoveLetterScene } from "@/scenes/LoveLetter/LoveLetterScene";
+import { MemoryGalaxyScene } from "@/scenes/MemoryGalaxy/MemoryGalaxyScene";
+import { EnchantedGardenScene } from "@/scenes/EnchantedGarden/EnchantedGardenScene";
+import { DreamIslandScene } from "@/scenes/DreamIsland/DreamIslandScene";
+import { GrandFinaleScene } from "@/scenes/GrandFinale/GrandFinaleScene";
 import { ChapterNav } from "@/components/navigation/ChapterNav";
 import { AudioPlayer } from "@/components/ui/AudioPlayer";
 import { SceneTransition } from "@/components/transitions/SceneTransition";
-import { WorldLoadingIndicator } from "@/components/ui/WorldLoadingIndicator";
 import { CinematicPreloader } from "@/components/ui/CinematicPreloader";
 import { motion, AnimatePresence } from "framer-motion";
-
-// Dynamic scene imports: only World 01 is bundled into the initial page load.
-// Worlds 02-06 and their respective 3D assets/materials are loaded on-demand when visited.
-const LoveLetterScene = dynamic(
-  () =>
-    import("@/scenes/LoveLetter/LoveLetterScene").then(
-      (mod) => mod.LoveLetterScene
-    ),
-  {
-    ssr: false,
-    loading: () => (
-      <WorldLoadingIndicator
-        worldTitle="Chapter 02 · The Love Letter"
-        subtitle="Unfolding antique parchment..."
-      />
-    ),
-  }
-);
-
-const MemoryGalaxyScene = dynamic(
-  () =>
-    import("@/scenes/MemoryGalaxy/MemoryGalaxyScene").then(
-      (mod) => mod.MemoryGalaxyScene
-    ),
-  {
-    ssr: false,
-    loading: () => (
-      <WorldLoadingIndicator
-        worldTitle="Chapter 03 · The Memory Galaxy"
-        subtitle="Aligning celestial constellations..."
-      />
-    ),
-  }
-);
-
-const EnchantedGardenScene = dynamic(
-  () =>
-    import("@/scenes/EnchantedGarden/EnchantedGardenScene").then(
-      (mod) => mod.EnchantedGardenScene
-    ),
-  {
-    ssr: false,
-    loading: () => (
-      <WorldLoadingIndicator
-        worldTitle="Chapter 04 · The Enchanted Garden"
-        subtitle="Awakening midnight blossoms..."
-      />
-    ),
-  }
-);
-
-const DreamIslandScene = dynamic(
-  () =>
-    import("@/scenes/DreamIsland/DreamIslandScene").then(
-      (mod) => mod.DreamIslandScene
-    ),
-  {
-    ssr: false,
-    loading: () => (
-      <WorldLoadingIndicator
-        worldTitle="Chapter 05 · The Dream Island"
-        subtitle="Approaching twilight sanctuary..."
-      />
-    ),
-  }
-);
-
-const GrandFinaleScene = dynamic(
-  () =>
-    import("@/scenes/GrandFinale/GrandFinaleScene").then(
-      (mod) => mod.GrandFinaleScene
-    ),
-  {
-    ssr: false,
-    loading: () => (
-      <WorldLoadingIndicator
-        worldTitle="Chapter 06 · The Grand Finale"
-        subtitle="Illuminating birthday celebration..."
-      />
-    ),
-  }
-);
 
 export default function Home() {
   const [isUniverseReady, setIsUniverseReady] = useState(false);
@@ -107,45 +26,6 @@ export default function Home() {
     "island",
     "finale",
   ]);
-
-  // Intelligent Background Asset Preloader:
-  // Pre-caches upcoming world artworks & memory photos during idle browser time
-  // so that world navigation and 3D constellation frames load instantaneously!
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const assetsToPreload = [
-      ASSETS.portal.heartPortalRef,
-      ASSETS.portal.cosmicNebula,
-      ASSETS.letter.stillLife,
-      ASSETS.galaxy.cosmicAtmosphere,
-      ASSETS.garden.roseGazebo,
-      ASSETS.island.floatingIsland,
-      ASSETS.finale.birthdayCelebration,
-      ...memoriesConfig.memories.map((m) => m.image),
-    ];
-
-    const preload = () => {
-      // 1. Preload high-fidelity WebP artwork & memory textures into browser cache
-      assetsToPreload.forEach((src) => {
-        const img = new window.Image();
-        img.src = src;
-      });
-
-      // 2. Pre-warm upcoming scene JavaScript chunks during idle time for instant mobile navigation
-      import("@/scenes/LoveLetter/LoveLetterScene");
-      import("@/scenes/MemoryGalaxy/MemoryGalaxyScene");
-      import("@/scenes/EnchantedGarden/EnchantedGardenScene");
-      import("@/scenes/DreamIsland/DreamIslandScene");
-      import("@/scenes/GrandFinale/GrandFinaleScene");
-    };
-
-    if ("requestIdleCallback" in window) {
-      window.requestIdleCallback(preload);
-    } else {
-      setTimeout(preload, 500);
-    }
-  }, []);
 
   const handlePortalEnter = () => {
     setIsTransitioning(true);
