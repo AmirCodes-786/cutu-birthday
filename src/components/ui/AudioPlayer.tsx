@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Volume2, VolumeX, Play, Pause, Sliders, Info } from "lucide-react";
+import { Volume2, VolumeX, Play, Pause, Sliders, Info, Music } from "lucide-react";
 import { audioConfig } from "@/config/audioConfig";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -99,72 +99,96 @@ export function AudioPlayer() {
   };
 
   return (
-    <div className="fixed top-3 left-3 sm:top-5 sm:left-5 z-40 flex items-center gap-1.5 sm:gap-2">
-      {/* Primary Pill Button */}
-      <motion.button
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.8, delay: 0.3 }}
-        onClick={togglePlay}
-        className="group relative flex items-center gap-2 sm:gap-2.5 px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-full bg-[#180B2E]/90 backdrop-blur-md border border-[#F5C77E]/30 hover:border-[#F5C77E]/70 shadow-[0_4px_20px_rgba(24,11,46,0.6)] transition-all cursor-pointer select-none"
-        aria-label={isPlaying ? "Pause soundtrack" : "Play soundtrack"}
-      >
-        {/* Play/Pause Icon with Glow */}
-        <div className="relative flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-tr from-[#66318D] to-[#D95BCB] text-[#FFF1E6] shadow-[0_0_10px_rgba(217,91,203,0.5)] shrink-0">
-          {isPlaying ? (
-            <Pause className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-current" />
-          ) : (
-            <Play className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-current translate-x-[0.5px]" />
-          )}
-        </div>
-
-        {/* Desktop Track Title & Subtitle */}
-        <div className="hidden sm:flex flex-col items-start pr-1">
-          <span className="text-[11px] font-serif font-semibold text-[#FFF1E6] tracking-wider group-hover:text-[#F5C77E] transition-colors leading-tight">
-            {audioConfig.trackTitle}
-          </span>
-          <span className="text-[9px] font-mono text-[#F8B7D0]/70 uppercase tracking-widest leading-none">
-            {isPlaying ? "Playing atmosphere" : "Click to play soundtrack"}
-          </span>
-        </div>
-
-        {/* Mobile Compact Label */}
-        <div className="flex sm:hidden items-center pr-0.5">
-          <span className="text-[10px] font-serif font-medium text-[#FFF1E6] tracking-wide">
-            {isPlaying ? "Music" : "Soundtrack"}
-          </span>
-        </div>
-
-        {/* Equalizer Visualizer */}
-        <div className="flex items-end gap-[1.5px] sm:gap-[2px] h-2.5 sm:h-3 px-0.5 sm:px-1">
-          {[0.3, 0.7, 1.0, 0.5, 0.8].map((factor, i) => (
-            <motion.span
-              key={i}
-              className={`w-[2px] rounded-full bg-[#F5C77E] ${i > 2 ? "hidden sm:block" : ""}`}
-              animate={{
-                height: isPlaying ? ["20%", `${factor * 100}%`, "20%"] : "20%",
-              }}
-              transition={{
-                duration: 0.8 + i * 0.15,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-            />
-          ))}
-        </div>
-      </motion.button>
-
-      {/* Volume Controls Toggle Button */}
+    <div className="fixed top-3 left-3 sm:top-5 sm:left-5 z-40 flex items-center gap-2">
+      {/* ========================================================
+          MOBILE ONLY: ULTRA-COMPACT GLOWING CIRCULAR ICON BUTTON
+         ======================================================== */}
       <motion.button
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, delay: 0.5 }}
-        onClick={() => setShowVolumePanel((prev) => !prev)}
-        className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#180B2E]/90 backdrop-blur-md border border-[#F5C77E]/30 hover:border-[#F5C77E]/60 text-[#FFF1E6] flex items-center justify-center transition-all cursor-pointer shadow-md shrink-0"
-        aria-label="Audio settings"
+        transition={{ duration: 0.6, delay: 0.2 }}
+        onClick={togglePlay}
+        className="flex sm:hidden relative items-center justify-center w-9 h-9 rounded-full bg-[#180B2E]/90 backdrop-blur-md border border-[#F5C77E]/40 hover:border-[#F5C77E]/80 shadow-[0_4px_16px_rgba(24,11,46,0.7)] cursor-pointer select-none shrink-0"
+        aria-label={isPlaying ? "Pause soundtrack" : "Play soundtrack"}
       >
-        <Sliders className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#F5C77E]" />
+        {/* Subtle ambient pulse ring when playing */}
+        {isPlaying && (
+          <span className="absolute inset-0 rounded-full border border-[#D95BCB] animate-ping opacity-60 pointer-events-none" />
+        )}
+
+        {/* Center Glowing Disc with Music/Pause Icon */}
+        <div className="relative flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-tr from-[#66318D] to-[#D95BCB] text-[#FFF1E6] shadow-[0_0_12px_rgba(217,91,203,0.7)]">
+          {isPlaying ? (
+            <Pause className="w-3.5 h-3.5 fill-current" />
+          ) : (
+            <Music className="w-3.5 h-3.5" />
+          )}
+        </div>
       </motion.button>
+
+      {/* ========================================================
+          DESKTOP ONLY: FULL BRANDED PILL WITH EQUALIZER & SLIDERS
+         ======================================================== */}
+      <div className="hidden sm:flex items-center gap-2">
+        {/* Primary Pill Button */}
+        <motion.button
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8, delay: 0.3 }}
+          onClick={togglePlay}
+          className="group relative flex items-center gap-2.5 px-3.5 py-2 rounded-full bg-[#180B2E]/90 backdrop-blur-md border border-[#F5C77E]/30 hover:border-[#F5C77E]/70 shadow-[0_4px_20px_rgba(24,11,46,0.6)] transition-all cursor-pointer select-none"
+          aria-label={isPlaying ? "Pause soundtrack" : "Play soundtrack"}
+        >
+          {/* Play/Pause Icon with Glow */}
+          <div className="relative flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-tr from-[#66318D] to-[#D95BCB] text-[#FFF1E6] shadow-[0_0_10px_rgba(217,91,203,0.5)] shrink-0">
+            {isPlaying ? (
+              <Pause className="w-3 h-3 fill-current" />
+            ) : (
+              <Play className="w-3 h-3 fill-current translate-x-[0.5px]" />
+            )}
+          </div>
+
+          {/* Desktop Track Title & Subtitle */}
+          <div className="flex flex-col items-start pr-1">
+            <span className="text-[11px] font-serif font-semibold text-[#FFF1E6] tracking-wider group-hover:text-[#F5C77E] transition-colors leading-tight">
+              {audioConfig.trackTitle}
+            </span>
+            <span className="text-[9px] font-mono text-[#F8B7D0]/70 uppercase tracking-widest leading-none">
+              {isPlaying ? "Playing atmosphere" : "Click to play soundtrack"}
+            </span>
+          </div>
+
+          {/* Equalizer Visualizer */}
+          <div className="flex items-end gap-[2px] h-3 px-1">
+            {[0.3, 0.7, 1.0, 0.5, 0.8].map((factor, i) => (
+              <motion.span
+                key={i}
+                className="w-[2px] rounded-full bg-[#F5C77E]"
+                animate={{
+                  height: isPlaying ? ["20%", `${factor * 100}%`, "20%"] : "20%",
+                }}
+                transition={{
+                  duration: 0.8 + i * 0.15,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              />
+            ))}
+          </div>
+        </motion.button>
+
+        {/* Volume Controls Toggle Button */}
+        <motion.button
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.5 }}
+          onClick={() => setShowVolumePanel((prev) => !prev)}
+          className="w-8 h-8 rounded-full bg-[#180B2E]/90 backdrop-blur-md border border-[#F5C77E]/30 hover:border-[#F5C77E]/60 text-[#FFF1E6] flex items-center justify-center transition-all cursor-pointer shadow-md shrink-0"
+          aria-label="Audio settings"
+        >
+          <Sliders className="w-3.5 h-3.5 text-[#F5C77E]" />
+        </motion.button>
+      </div>
 
       {/* Floating Volume Slider & Help Panel */}
       <AnimatePresence>
