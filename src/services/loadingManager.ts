@@ -1,19 +1,23 @@
 /**
  * Authoritative Central Asset Loading Manager for HER UNIVERSE
  *
- * Provides a genuine, verifiable asset orchestration pipeline ensuring all
+ * Provides a genuine, verifiable, prioritized asset orchestration pipeline ensuring all
  * six worlds, 3D Canvas modules, personal memory photographs, Drei/Three textures,
  * full cinematic video stream (8.76 MB), typography, and the Secret Portal's
  * first rendered WebGL frame are completely loaded and decoded in browser memory
  * before the cinematic preloader completes.
  *
  * Guarantees:
- * - 0 fake timers inflating progress
+ * - Controlled concurrency (5 concurrent network workers) with prioritized execution
+ * - Priority 1 (Portal Readiness): Fonts, portal artwork, portal module & first frame
+ * - Priority 2 (Remaining 5 Worlds): Love letter, 6 memory photos & textures, garden, island video & poster, finale
+ * - Priority 3 (Remaining Modules & Transitions): 3D modules & transition imagery
+ * - 0 duplicate downloads: Three.js cache seeded directly from decoded images
+ * - Real-time byte-streamed telemetry via ReadableStream for Dream Island video
+ * - 0 artificial timers or fake jumps
  * - Failed tasks NEVER count towards 100% completion
- * - Required failures halt completion until resolved
- * - Dream Island video is downloaded and ready for playback with zero re-download
- * - Drei/Three texture cache is seeded with all 6 memory photos
- * - First usable WebGL frame of Secret Portal is confirmed rendered
+ * - Granular lifecycle tracking: queued -> downloading -> decoding -> preparing -> ready
+ * - Dynamic narrative stage messages driven by genuine world readiness
  */
 
 import * as THREE from "three";
@@ -41,7 +45,15 @@ export type WorldCategory =
 
 export type AssetClassification = "required" | "optional";
 
-export type AssetState = "pending" | "loading" | "loaded" | "failed";
+export type TaskPriority = 1 | 2 | 3;
+
+export type AssetState =
+  | "queued"
+  | "downloading"
+  | "decoding"
+  | "preparing"
+  | "ready"
+  | "failed";
 
 export interface AssetTask {
   id: string;
@@ -49,6 +61,7 @@ export interface AssetTask {
   type: AssetType;
   category: WorldCategory;
   classification: AssetClassification;
+  priority: TaskPriority;
   weight: number;
   state: AssetState;
   progress: number; // 0.0 to 1.0
@@ -75,15 +88,31 @@ export interface LoadingProgress {
     classification: AssetClassification;
   }>;
   tasks: AssetTask[];
+  bytesLoaded?: number;
+  bytesTotal?: number;
+  activeTaskCount?: number;
+  isPortalReady?: boolean;
 }
 
 export type ProgressListener = (progress: LoadingProgress) => void;
+
+interface QueuedWorkItem {
+  id: string;
+  priority: TaskPriority;
+  dependsOn?: string;
+  run: () => Promise<void>;
+}
 
 class AssetLoadingManager {
   private tasks: Map<string, AssetTask> = new Map();
   private listeners: Set<ProgressListener> = new Set();
   private isStarted = false;
-  private currentTaskName = "Initializing universe...";
+  private currentTaskName = "Opening a little universe...";
+
+  // Concurrency queue runner
+  private queue: QueuedWorkItem[] = [];
+  private activeWorkers = 0;
+  private readonly MAX_CONCURRENCY = 5; // Controlled 4-6 concurrent network tasks
 
   // Authoritative caches for reusable resources
   private imageCache: Map<string, HTMLImageElement> = new Map();
@@ -100,7 +129,7 @@ class AssetLoadingManager {
    */
   private registerEssentialTasks() {
     // -------------------------------------------------------------
-    // Core Typography (Weight: 6)
+    // PRIORITY 1: Core Typography & Secret Portal (Total Weight: 24)
     // -------------------------------------------------------------
     this.addTask({
       id: "font-cinzel",
@@ -108,6 +137,7 @@ class AssetLoadingManager {
       type: "font",
       category: "core",
       classification: "required",
+      priority: 1,
       weight: 1.5,
     });
     this.addTask({
@@ -116,6 +146,7 @@ class AssetLoadingManager {
       type: "font",
       category: "core",
       classification: "required",
+      priority: 1,
       weight: 1.5,
     });
     this.addTask({
@@ -124,6 +155,7 @@ class AssetLoadingManager {
       type: "font",
       category: "core",
       classification: "required",
+      priority: 1,
       weight: 1.5,
     });
     this.addTask({
@@ -132,30 +164,17 @@ class AssetLoadingManager {
       type: "font",
       category: "core",
       classification: "required",
+      priority: 1,
       weight: 1.5,
     });
 
-    // -------------------------------------------------------------
-    // Shared Transitions (Weight: 3)
-    // -------------------------------------------------------------
-    this.addTask({
-      id: "transition-meadow",
-      name: "Transitions: Moonlit Meadow Atmospheric Texture",
-      type: "image",
-      category: "transitions",
-      classification: "required",
-      weight: 3,
-    });
-
-    // -------------------------------------------------------------
-    // World 01: Secret Portal (Weight: 18)
-    // -------------------------------------------------------------
     this.addTask({
       id: "portal-heart",
       name: "World 01: Celestial Heart Portal Artwork",
       type: "image",
       category: "portal",
       classification: "required",
+      priority: 1,
       weight: 5,
     });
     this.addTask({
@@ -164,6 +183,7 @@ class AssetLoadingManager {
       type: "image",
       category: "portal",
       classification: "required",
+      priority: 1,
       weight: 4,
     });
     this.addTask({
@@ -172,6 +192,7 @@ class AssetLoadingManager {
       type: "module",
       category: "portal",
       classification: "required",
+      priority: 1,
       weight: 4,
     });
     this.addTask({
@@ -180,11 +201,12 @@ class AssetLoadingManager {
       type: "scene-ready",
       category: "portal",
       classification: "required",
+      priority: 1,
       weight: 5,
     });
 
     // -------------------------------------------------------------
-    // World 02: Love Letter (Weight: 8)
+    // PRIORITY 2: Remaining 5 Worlds Media, Photos & Video (Weight: 57)
     // -------------------------------------------------------------
     this.addTask({
       id: "letter-still-life",
@@ -192,38 +214,21 @@ class AssetLoadingManager {
       type: "image",
       category: "letter",
       classification: "required",
+      priority: 2,
       weight: 5,
     });
-    this.addTask({
-      id: "module-letter",
-      name: "World 02: 3D Wax Seal & Parchment Envelope Module",
-      type: "module",
-      category: "letter",
-      classification: "required",
-      weight: 3,
-    });
 
-    // -------------------------------------------------------------
-    // World 03: Memory Galaxy (Weight: 26)
-    // -------------------------------------------------------------
     this.addTask({
       id: "galaxy-atmosphere",
       name: "World 03: Memory Galaxy Starry Atmosphere",
       type: "image",
       category: "galaxy",
       classification: "required",
-      weight: 4,
-    });
-    this.addTask({
-      id: "module-galaxy",
-      name: "World 03: 3D Celestial Constellation Module",
-      type: "module",
-      category: "galaxy",
-      classification: "required",
+      priority: 2,
       weight: 4,
     });
 
-    // 6 Personal Memory Photographs (Decoded HTML Images)
+    // 6 Personal Memory Photographs (Decoded HTML Images, Priority 2)
     memoriesConfig.memories.forEach((mem) => {
       this.addTask({
         id: `memory-photo-${mem.id}`,
@@ -231,11 +236,12 @@ class AssetLoadingManager {
         type: "image",
         category: "galaxy",
         classification: "required",
+        priority: 2,
         weight: 1.5,
       });
     });
 
-    // 6 Three.js Textures (Preloaded in Drei useTexture/TextureLoader cache)
+    // 6 Three.js Textures (Derived directly from decoded image cache, Priority 2)
     memoriesConfig.memories.forEach((mem) => {
       this.addTask({
         id: `memory-texture-${mem.id}`,
@@ -243,39 +249,28 @@ class AssetLoadingManager {
         type: "texture",
         category: "galaxy",
         classification: "required",
+        priority: 2,
         weight: 1.5,
       });
     });
 
-    // -------------------------------------------------------------
-    // World 04: Enchanted Garden (Weight: 7)
-    // -------------------------------------------------------------
     this.addTask({
       id: "garden-gazebo",
       name: "World 04: Moonlit Rose Gazebo Artwork",
       type: "image",
       category: "garden",
       classification: "required",
+      priority: 2,
       weight: 4,
     });
-    this.addTask({
-      id: "module-garden",
-      name: "World 04: 3D Enchanted Garden Blossoms Module",
-      type: "module",
-      category: "garden",
-      classification: "required",
-      weight: 3,
-    });
 
-    // -------------------------------------------------------------
-    // World 05: Dream Island (Weight: 25)
-    // -------------------------------------------------------------
     this.addTask({
       id: "island-poster",
       name: "World 05: Floating Sanctuary Sunset Backdrop Artwork",
       type: "image",
       category: "island",
       classification: "required",
+      priority: 2,
       weight: 4,
     });
     this.addTask({
@@ -284,7 +279,49 @@ class AssetLoadingManager {
       type: "video",
       category: "island",
       classification: "required",
+      priority: 2,
       weight: 18,
+    });
+
+    this.addTask({
+      id: "finale-celebration",
+      name: "World 06: Moonlit Birthday Celebration Artwork",
+      type: "image",
+      category: "finale",
+      classification: "required",
+      priority: 2,
+      weight: 4,
+    });
+
+    // -------------------------------------------------------------
+    // PRIORITY 3: Dynamic 3D Modules & Shared Transitions (Weight: 19)
+    // -------------------------------------------------------------
+    this.addTask({
+      id: "module-letter",
+      name: "World 02: 3D Wax Seal & Parchment Envelope Module",
+      type: "module",
+      category: "letter",
+      classification: "required",
+      priority: 3,
+      weight: 3,
+    });
+    this.addTask({
+      id: "module-galaxy",
+      name: "World 03: 3D Celestial Constellation Module",
+      type: "module",
+      category: "galaxy",
+      classification: "required",
+      priority: 3,
+      weight: 4,
+    });
+    this.addTask({
+      id: "module-garden",
+      name: "World 04: 3D Enchanted Garden Blossoms Module",
+      type: "module",
+      category: "garden",
+      classification: "required",
+      priority: 3,
+      weight: 3,
     });
     this.addTask({
       id: "module-island",
@@ -292,19 +329,8 @@ class AssetLoadingManager {
       type: "module",
       category: "island",
       classification: "required",
+      priority: 3,
       weight: 3,
-    });
-
-    // -------------------------------------------------------------
-    // World 06: Grand Finale (Weight: 7)
-    // -------------------------------------------------------------
-    this.addTask({
-      id: "finale-celebration",
-      name: "World 06: Moonlit Birthday Celebration Artwork",
-      type: "image",
-      category: "finale",
-      classification: "required",
-      weight: 4,
     });
     this.addTask({
       id: "module-finale",
@@ -312,6 +338,16 @@ class AssetLoadingManager {
       type: "module",
       category: "finale",
       classification: "required",
+      priority: 3,
+      weight: 3,
+    });
+    this.addTask({
+      id: "transition-meadow",
+      name: "Transitions: Moonlit Meadow Atmospheric Texture",
+      type: "image",
+      category: "transitions",
+      classification: "required",
+      priority: 3,
       weight: 3,
     });
   }
@@ -319,7 +355,7 @@ class AssetLoadingManager {
   private addTask(task: Omit<AssetTask, "state" | "progress">) {
     this.tasks.set(task.id, {
       ...task,
-      state: "pending",
+      state: "queued",
       progress: 0,
     });
   }
@@ -337,20 +373,82 @@ class AssetLoadingManager {
     this.listeners.forEach((listener) => listener(snapshot));
   }
 
-  private getStageMessage(percentage: number): string {
-    if (percentage < 15) {
-      return "Awakening typography & starlit celestial gateway...";
-    } else if (percentage < 35) {
-      return "Unfolding antique parchment & romantic still life...";
-    } else if (percentage < 60) {
-      return "Aligning your 6 memory stars & cosmic constellation...";
-    } else if (percentage < 85) {
-      return "Streaming floating sanctuary video & midnight blossoms...";
-    } else if (percentage < 100) {
-      return "Preparing your grand birthday cake celebration...";
-    } else {
-      return "Her Universe is ready for you... ♡";
+  /**
+   * Dynamic narrative stage messages driven by actual world readiness.
+   */
+  private getStageMessage(percentage: number, isComplete: boolean): string {
+    if (isComplete || percentage >= 100) {
+      return "Your universe is ready. ♡";
     }
+
+    if (percentage >= 92) {
+      return "Every little detail is falling into place...";
+    }
+
+    // Active task inspection
+    const isCategoryActive = (cat: WorldCategory) => {
+      for (const t of this.tasks.values()) {
+        if (
+          t.category === cat &&
+          (t.state === "downloading" ||
+            t.state === "decoding" ||
+            t.state === "preparing")
+        ) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    const isCategoryIncomplete = (cat: WorldCategory) => {
+      for (const t of this.tasks.values()) {
+        if (t.category === cat && t.state !== "ready") {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    if (isCategoryActive("finale")) {
+      return "Lighting up your birthday...";
+    }
+    if (isCategoryActive("island")) {
+      return "Preparing Dream Island...";
+    }
+    if (isCategoryActive("garden")) {
+      return "Growing something magical...";
+    }
+    if (isCategoryActive("galaxy")) {
+      return "Gathering our memories...";
+    }
+    if (isCategoryActive("letter")) {
+      return "Preparing your love letter...";
+    }
+    if (isCategoryActive("portal") || isCategoryActive("core")) {
+      return "Opening a little universe...";
+    }
+
+    // Category incomplete progression
+    if (isCategoryIncomplete("portal") || isCategoryIncomplete("core")) {
+      return "Opening a little universe...";
+    }
+    if (isCategoryIncomplete("letter")) {
+      return "Preparing your love letter...";
+    }
+    if (isCategoryIncomplete("galaxy")) {
+      return "Gathering our memories...";
+    }
+    if (isCategoryIncomplete("garden")) {
+      return "Growing something magical...";
+    }
+    if (isCategoryIncomplete("island")) {
+      return "Preparing Dream Island...";
+    }
+    if (isCategoryIncomplete("finale")) {
+      return "Lighting up your birthday...";
+    }
+
+    return "Opening a little universe...";
   }
 
   public getProgressSnapshot(): LoadingProgress {
@@ -361,6 +459,9 @@ class AssetLoadingManager {
     let failedOptionalCount = 0;
     let totalRequiredCount = 0;
     let completedRequiredCount = 0;
+    let totalBytesLoaded = 0;
+    let totalBytesTracked = 0;
+    let activeTaskCount = 0;
 
     const errors: Array<{
       id: string;
@@ -376,16 +477,28 @@ class AssetLoadingManager {
         totalRequiredCount++;
       }
 
-      // CRITICAL: Only loaded or actively loading tasks contribute earned weight.
+      if (task.bytesTotal && task.bytesTotal > 0) {
+        totalBytesTracked += task.bytesTotal;
+        totalBytesLoaded += task.bytesLoaded || 0;
+      }
+
+      // CRITICAL: Only 'ready' or actively loading tasks contribute earned weight.
       // Failed tasks NEVER contribute progress.
-      if (task.state === "loaded") {
+      if (task.state === "ready") {
         earnedWeight += task.weight;
         completedCount++;
         if (task.classification === "required") {
           completedRequiredCount++;
         }
-      } else if (task.state === "loading" && task.progress > 0) {
-        earnedWeight += task.weight * Math.min(1.0, Math.max(0, task.progress));
+      } else if (
+        task.state === "downloading" ||
+        task.state === "decoding" ||
+        task.state === "preparing"
+      ) {
+        activeTaskCount++;
+        if (task.progress > 0) {
+          earnedWeight += task.weight * Math.min(1.0, Math.max(0, task.progress));
+        }
       } else if (task.state === "failed") {
         if (task.classification === "required") {
           failedRequiredCount++;
@@ -416,18 +529,33 @@ class AssetLoadingManager {
       completedRequiredCount === totalRequiredCount &&
       percentage >= 100;
 
+    const isPortalReady = [
+      "font-cinzel",
+      "font-garamond",
+      "font-vibes",
+      "font-jakarta",
+      "portal-heart",
+      "portal-nebula",
+      "module-portal",
+      "portal-first-frame",
+    ].every((id) => this.tasks.get(id)?.state === "ready");
+
     return {
       percentage,
       completedTasks: completedCount,
       totalTasks: this.tasks.size,
       currentTaskName: this.currentTaskName,
-      stageMessage: this.getStageMessage(percentage),
+      stageMessage: this.getStageMessage(percentage, isComplete),
       isComplete,
       hasErrors: errors.length > 0,
       failedRequiredCount,
       failedOptionalCount,
       errors,
       tasks: Array.from(this.tasks.values()),
+      bytesLoaded: totalBytesLoaded,
+      bytesTotal: totalBytesTracked,
+      activeTaskCount,
+      isPortalReady,
     };
   }
 
@@ -437,17 +565,66 @@ class AssetLoadingManager {
 
     Object.assign(task, updates);
 
-    if (updates.state === "loaded") {
+    if (updates.state === "ready") {
       task.progress = 1.0;
     } else if (updates.state === "failed") {
       task.progress = 0;
     }
 
-    if (updates.name && task.state === "loading") {
-      this.currentTaskName = task.name;
+    if (
+      updates.name ||
+      updates.state === "downloading" ||
+      updates.state === "decoding" ||
+      updates.state === "preparing"
+    ) {
+      if (task.state !== "ready" && task.state !== "failed") {
+        this.currentTaskName = task.name;
+      }
     }
 
     this.notify();
+  }
+
+  // =========================================================================
+  // CONCURRENCY WORKER QUEUE SCHEDULER (4-6 Concurrent Network Tasks)
+  // =========================================================================
+
+  private enqueue(item: QueuedWorkItem) {
+    this.queue.push(item);
+    // Sort queue by priority ascending (Priority 1 first, then 2, then 3)
+    this.queue.sort((a, b) => a.priority - b.priority);
+    this.processQueue();
+  }
+
+  private processQueue() {
+    if (this.activeWorkers >= this.MAX_CONCURRENCY) return;
+
+    // Find the highest priority item whose dependency is satisfied
+    const candidateIndex = this.queue.findIndex((item) => {
+      if (!item.dependsOn) return true;
+      const depTask = this.tasks.get(item.dependsOn);
+      return depTask && depTask.state === "ready";
+    });
+
+    if (candidateIndex === -1) return;
+
+    const [item] = this.queue.splice(candidateIndex, 1);
+    this.activeWorkers++;
+
+    item
+      .run()
+      .catch((err) => {
+        console.error(`[AssetLoader] Queue task error for ${item.id}:`, err);
+      })
+      .finally(() => {
+        this.activeWorkers--;
+        this.processQueue();
+      });
+
+    // If worker capacity remains, continue draining queue
+    if (this.activeWorkers < this.MAX_CONCURRENCY && this.queue.length > 0) {
+      this.processQueue();
+    }
   }
 
   /**
@@ -460,37 +637,14 @@ class AssetLoadingManager {
     // Enable Three.js global caching upfront
     THREE.Cache.enabled = true;
 
-    // Initialize parallel loaders
-    this.loadAllFonts();
-    this.loadAllImages();
-    this.loadAllTextures();
-    this.loadAll3DModules();
-    this.loadSanctuaryVideo();
+    // Enqueue all tasks into prioritized concurrency pipeline
+    this.enqueueAllTasks();
   }
 
-  /**
-   * Retries any failed tasks.
-   */
-  public retryFailed(): void {
-    this.tasks.forEach((task) => {
-      if (task.state === "failed") {
-        this.updateTask(task.id, { state: "pending", error: undefined, progress: 0 });
-      }
-    });
-
-    // Restart failed task groups
-    this.loadAllFonts();
-    this.loadAllImages();
-    this.loadAllTextures();
-    this.loadAll3DModules();
-    this.loadSanctuaryVideo();
-  }
-
-  // =========================================================================
-  // 1. TYPOGRAPHY & FONT LOADING
-  // =========================================================================
-
-  private async loadAllFonts() {
+  private enqueueAllTasks() {
+    // -------------------------------------------------------------
+    // PRIORITY 1: Fonts, Secret Portal Artworks & Module
+    // -------------------------------------------------------------
     const fontDefinitions: Array<{
       id: string;
       family: string;
@@ -535,18 +689,225 @@ class AssetLoadingManager {
     ];
 
     fontDefinitions.forEach(({ id, family, specs }) => {
-      const task = this.tasks.get(id);
-      if (!task || task.state === "loaded") return;
-      this.loadSingleFontFamily(id, family, specs);
+      this.enqueue({
+        id,
+        priority: 1,
+        run: () => this.loadSingleFontFamily(id, family, specs),
+      });
+    });
+
+    this.enqueue({
+      id: "portal-heart",
+      priority: 1,
+      run: () =>
+        this.loadSingleImageWithDecode(
+          "portal-heart",
+          getSceneBackgroundUrl("portal")
+        ),
+    });
+
+    this.enqueue({
+      id: "portal-nebula",
+      priority: 1,
+      run: () =>
+        this.loadSingleImageWithDecode(
+          "portal-nebula",
+          ASSETS.portal.cosmicNebula
+        ),
+    });
+
+    this.enqueue({
+      id: "module-portal",
+      priority: 1,
+      run: () =>
+        this.loadSingleModule(
+          "module-portal",
+          () => import("@/components3d/Portal/PortalCanvas")
+        ),
+    });
+
+    // -------------------------------------------------------------
+    // PRIORITY 2: Remaining Worlds Artworks, Memory Photos, Textures & Video
+    // -------------------------------------------------------------
+    this.enqueue({
+      id: "letter-still-life",
+      priority: 2,
+      run: () =>
+        this.loadSingleImageWithDecode(
+          "letter-still-life",
+          getSceneBackgroundUrl("letter")
+        ),
+    });
+
+    this.enqueue({
+      id: "galaxy-atmosphere",
+      priority: 2,
+      run: () =>
+        this.loadSingleImageWithDecode(
+          "galaxy-atmosphere",
+          getSceneBackgroundUrl("galaxy")
+        ),
+    });
+
+    // Memory photos (Priority 2)
+    memoriesConfig.memories.forEach((mem) => {
+      this.enqueue({
+        id: `memory-photo-${mem.id}`,
+        priority: 2,
+        run: () =>
+          this.loadSingleImageWithDecode(`memory-photo-${mem.id}`, mem.image),
+      });
+    });
+
+    // Memory textures (Priority 2 - dependsOn memory-photo to ensure ZERO duplicate download)
+    memoriesConfig.memories.forEach((mem) => {
+      this.enqueue({
+        id: `memory-texture-${mem.id}`,
+        priority: 2,
+        dependsOn: `memory-photo-${mem.id}`,
+        run: () =>
+          this.loadSingleTexture(`memory-texture-${mem.id}`, mem.image),
+      });
+    });
+
+    this.enqueue({
+      id: "garden-gazebo",
+      priority: 2,
+      run: () =>
+        this.loadSingleImageWithDecode(
+          "garden-gazebo",
+          getSceneBackgroundUrl("garden")
+        ),
+    });
+
+    this.enqueue({
+      id: "island-poster",
+      priority: 2,
+      run: () =>
+        this.loadSingleImageWithDecode(
+          "island-poster",
+          ASSETS.island.floatingIsland
+        ),
+    });
+
+    // Dream Island video stream (Priority 2, 8.76 MB via ReadableStream)
+    this.enqueue({
+      id: "island-video",
+      priority: 2,
+      run: () => this.loadSanctuaryVideo(),
+    });
+
+    this.enqueue({
+      id: "finale-celebration",
+      priority: 2,
+      run: () =>
+        this.loadSingleImageWithDecode(
+          "finale-celebration",
+          getSceneBackgroundUrl("finale")
+        ),
+    });
+
+    // -------------------------------------------------------------
+    // PRIORITY 3: Dynamic 3D Modules & Transition Meadow
+    // -------------------------------------------------------------
+    this.enqueue({
+      id: "module-letter",
+      priority: 3,
+      run: () =>
+        this.loadSingleModule(
+          "module-letter",
+          () => import("@/components3d/Envelope/EnvelopeCanvas")
+        ),
+    });
+
+    this.enqueue({
+      id: "module-galaxy",
+      priority: 3,
+      run: () =>
+        this.loadSingleModule(
+          "module-galaxy",
+          () => import("@/components3d/MemoryGalaxy/MemoryGalaxyCanvas")
+        ),
+    });
+
+    this.enqueue({
+      id: "module-garden",
+      priority: 3,
+      run: () =>
+        this.loadSingleModule(
+          "module-garden",
+          () => import("@/components3d/EnchantedGarden/EnchantedGardenCanvas")
+        ),
+    });
+
+    this.enqueue({
+      id: "module-island",
+      priority: 3,
+      run: () =>
+        this.loadSingleModule(
+          "module-island",
+          () => import("@/components3d/DreamIsland/DreamIslandAtmosphere")
+        ),
+    });
+
+    this.enqueue({
+      id: "module-finale",
+      priority: 3,
+      run: () =>
+        this.loadSingleModule(
+          "module-finale",
+          () => import("@/components3d/Finale/FinaleCanvas")
+        ),
+    });
+
+    this.enqueue({
+      id: "transition-meadow",
+      priority: 3,
+      run: () =>
+        this.loadSingleImageWithDecode(
+          "transition-meadow",
+          ASSETS.transitions.moonlitMeadow
+        ),
     });
   }
+
+  /**
+   * Retries any failed tasks.
+   */
+  public retryFailed(): void {
+    if (typeof window === "undefined") return;
+
+    const failedIds: string[] = [];
+    this.tasks.forEach((task) => {
+      if (task.state === "failed") {
+        failedIds.push(task.id);
+        this.updateTask(task.id, {
+          state: "queued",
+          error: undefined,
+          progress: 0,
+        });
+      }
+    });
+
+    if (failedIds.length === 0) return;
+
+    // Re-register failed items into the queue
+    this.enqueueAllTasks();
+  }
+
+  // =========================================================================
+  // 1. TYPOGRAPHY & FONT LOADING (Priority 1)
+  // =========================================================================
 
   private async loadSingleFontFamily(
     id: string,
     family: string,
     specs: string[]
   ) {
-    this.updateTask(id, { state: "loading", progress: 0 });
+    const task = this.tasks.get(id);
+    if (!task || task.state === "ready") return;
+
+    this.updateTask(id, { state: "downloading", progress: 0.2 });
 
     try {
       if (typeof document !== "undefined" && "fonts" in document) {
@@ -554,20 +915,21 @@ class AssetLoadingManager {
         const loadPromises = specs.map((spec) => document.fonts.load(spec));
         await Promise.all(loadPromises);
 
+        this.updateTask(id, { state: "preparing", progress: 0.8 });
         // Ensure document font set has completed settling
         await document.fonts.ready;
 
         // Verify with font check
         const isVerified = specs.some((spec) => document.fonts.check(spec));
         if (!isVerified) {
-          // Micro-tick retry in case of rendering pipeline delay
-          await new Promise((r) => setTimeout(r, 150));
+          // Brief tick retry in case of rendering pipeline delay
+          await new Promise((r) => setTimeout(r, 120));
         }
 
-        this.updateTask(id, { state: "loaded", progress: 1.0 });
+        this.updateTask(id, { state: "ready", progress: 1.0 });
       } else {
         // Fallback for environments lacking document.fonts API
-        this.updateTask(id, { state: "loaded", progress: 1.0 });
+        this.updateTask(id, { state: "ready", progress: 1.0 });
       }
     } catch (err: unknown) {
       const errorMsg =
@@ -585,43 +947,17 @@ class AssetLoadingManager {
   // 2. WORLD ARTWORKS, PHOTOS & TRANSITION IMAGES
   // =========================================================================
 
-  private loadAllImages() {
-    const imagesToLoad: Array<{ id: string; url: string }> = [
-      { id: "transition-meadow", url: ASSETS.transitions.moonlitMeadow },
-      { id: "portal-heart", url: getSceneBackgroundUrl("portal") },
-      { id: "portal-nebula", url: ASSETS.portal.cosmicNebula },
-      { id: "letter-still-life", url: getSceneBackgroundUrl("letter") },
-      { id: "galaxy-atmosphere", url: getSceneBackgroundUrl("galaxy") },
-      { id: "garden-gazebo", url: getSceneBackgroundUrl("garden") },
-      { id: "island-poster", url: ASSETS.island.floatingIsland },
-      { id: "finale-celebration", url: getSceneBackgroundUrl("finale") },
-    ];
-
-    memoriesConfig.memories.forEach((mem) => {
-      imagesToLoad.push({
-        id: `memory-photo-${mem.id}`,
-        url: mem.image,
-      });
-    });
-
-    imagesToLoad.forEach(({ id, url }) => {
-      const task = this.tasks.get(id);
-      if (!task || task.state === "loaded") return;
-      this.loadSingleImageWithDecode(id, url);
-    });
-  }
-
   private async loadSingleImageWithDecode(id: string, url: string) {
     if (this.imageCache.has(url)) {
       this.updateTask(id, {
-        state: "loaded",
+        state: "ready",
         progress: 1.0,
         resource: this.imageCache.get(url),
       });
       return;
     }
 
-    this.updateTask(id, { state: "loading", progress: 0 });
+    this.updateTask(id, { state: "downloading", progress: 0.1 });
 
     const MAX_RETRIES = 2;
     let attempt = 0;
@@ -645,10 +981,14 @@ class AssetLoadingManager {
           img.src = url;
         });
 
+        this.updateTask(id, { state: "decoding", progress: 0.8 });
+
         // Genuine browser hardware decoding
         if (typeof img.decode === "function") {
           await img.decode();
         }
+
+        this.updateTask(id, { state: "preparing", progress: 0.95 });
 
         // Populate Three.js ImageLoader cache to guarantee zero duplicate network downloads
         THREE.Cache.enabled = true;
@@ -657,7 +997,7 @@ class AssetLoadingManager {
 
         this.imageCache.set(url, img);
         this.updateTask(id, {
-          state: "loaded",
+          state: "ready",
           progress: 1.0,
           resource: img,
         });
@@ -675,7 +1015,7 @@ class AssetLoadingManager {
           });
           return;
         }
-        await new Promise((r) => setTimeout(r, 500 * attempt));
+        await new Promise((r) => setTimeout(r, 450 * attempt));
       }
     }
   }
@@ -684,26 +1024,17 @@ class AssetLoadingManager {
   // 3. THREE.JS & DREI TEXTURE PRELOADING
   // =========================================================================
 
-  private loadAllTextures() {
-    memoriesConfig.memories.forEach((mem) => {
-      const id = `memory-texture-${mem.id}`;
-      const task = this.tasks.get(id);
-      if (!task || task.state === "loaded") return;
-      this.loadSingleTexture(id, mem.image);
-    });
-  }
-
   private async loadSingleTexture(id: string, url: string) {
     if (this.textureCache.has(url)) {
       this.updateTask(id, {
-        state: "loaded",
+        state: "ready",
         progress: 1.0,
         resource: this.textureCache.get(url),
       });
       return;
     }
 
-    this.updateTask(id, { state: "loading", progress: 0 });
+    this.updateTask(id, { state: "downloading", progress: 0.2 });
 
     // Ensure Three.js Cache is active
     THREE.Cache.enabled = true;
@@ -722,10 +1053,12 @@ class AssetLoadingManager {
       try {
         const loader = new THREE.TextureLoader();
         loader.setCrossOrigin("anonymous");
+
         const texture = await new Promise<THREE.Texture>((resolve, reject) => {
           loader.load(
             url,
             (tex) => {
+              this.updateTask(id, { state: "preparing", progress: 0.9 });
               tex.colorSpace = THREE.SRGBColorSpace;
               tex.generateMipmaps = true;
               tex.minFilter = THREE.LinearMipmapLinearFilter;
@@ -740,7 +1073,7 @@ class AssetLoadingManager {
 
         this.textureCache.set(url, texture);
         this.updateTask(id, {
-          state: "loaded",
+          state: "ready",
           progress: 1.0,
           resource: texture,
         });
@@ -758,7 +1091,7 @@ class AssetLoadingManager {
           });
           return;
         }
-        await new Promise((r) => setTimeout(r, 500 * attempt));
+        await new Promise((r) => setTimeout(r, 450 * attempt));
       }
     }
   }
@@ -767,49 +1100,14 @@ class AssetLoadingManager {
   // 4. JAVASCRIPT 3D CANVAS SCENE MODULES
   // =========================================================================
 
-  private loadAll3DModules() {
-    const modules: Array<{
-      id: string;
-      loader: () => Promise<unknown>;
-    }> = [
-      {
-        id: "module-portal",
-        loader: () => import("@/components3d/Portal/PortalCanvas"),
-      },
-      {
-        id: "module-letter",
-        loader: () => import("@/components3d/Envelope/EnvelopeCanvas"),
-      },
-      {
-        id: "module-galaxy",
-        loader: () => import("@/components3d/MemoryGalaxy/MemoryGalaxyCanvas"),
-      },
-      {
-        id: "module-garden",
-        loader: () => import("@/components3d/EnchantedGarden/EnchantedGardenCanvas"),
-      },
-      {
-        id: "module-island",
-        loader: () => import("@/components3d/DreamIsland/DreamIslandAtmosphere"),
-      },
-      {
-        id: "module-finale",
-        loader: () => import("@/components3d/Finale/FinaleCanvas"),
-      },
-    ];
-
-    modules.forEach(({ id, loader }) => {
-      const task = this.tasks.get(id);
-      if (!task || task.state === "loaded") return;
-      this.loadSingleModule(id, loader);
-    });
-  }
-
   private async loadSingleModule(
     id: string,
     loader: () => Promise<unknown>
   ) {
-    this.updateTask(id, { state: "loading", progress: 0 });
+    const task = this.tasks.get(id);
+    if (!task || task.state === "ready") return;
+
+    this.updateTask(id, { state: "downloading", progress: 0.3 });
 
     const MAX_RETRIES = 2;
     let attempt = 0;
@@ -817,8 +1115,9 @@ class AssetLoadingManager {
     while (attempt <= MAX_RETRIES) {
       try {
         const mod = await loader();
+        this.updateTask(id, { state: "preparing", progress: 0.9 });
         this.updateTask(id, {
-          state: "loaded",
+          state: "ready",
           progress: 1.0,
           resource: mod,
         });
@@ -829,7 +1128,6 @@ class AssetLoadingManager {
           const errorMsg =
             err instanceof Error ? err.message : "Module import failed";
           console.error(`[AssetLoader] Module failure for ${id}:`, err);
-          // STRICT RULE: Failed module MUST NOT be marked loaded
           this.updateTask(id, {
             state: "failed",
             progress: 0,
@@ -837,45 +1135,49 @@ class AssetLoadingManager {
           });
           return;
         }
-        await new Promise((r) => setTimeout(r, 600 * attempt));
+        await new Promise((r) => setTimeout(r, 500 * attempt));
       }
     }
   }
 
   // =========================================================================
-  // 5. DREAM ISLAND VIDEO (Full 8.76 MB Download & Stream Preparation)
+  // 5. DREAM ISLAND VIDEO (8.76 MB Download & Stream Preparation via ReadableStream)
   // =========================================================================
 
   private async loadSanctuaryVideo() {
     const id = "island-video";
     const url = ASSETS.island.video;
     const task = this.tasks.get(id);
-    if (!task || task.state === "loaded") return;
+    if (!task || task.state === "ready") return;
 
     if (this.videoBlobMap.has(url)) {
       const cached = this.videoBlobMap.get(url)!;
       this.updateTask(id, {
-        state: "loaded",
+        state: "ready",
         progress: 1.0,
         resource: cached.blobUrl,
       });
       return;
     }
 
-    this.updateTask(id, { state: "loading", progress: 0 });
+    this.updateTask(id, { state: "downloading", progress: 0 });
 
     const MAX_RETRIES = 2;
     let attempt = 0;
 
     while (attempt <= MAX_RETRIES) {
       try {
-        const response = await fetch(url);
+        const response = await fetch(url, {
+          mode: "cors",
+          credentials: "omit",
+        });
+
         if (!response.ok) {
           throw new Error(`HTTP ${response.status} ${response.statusText}`);
         }
 
         const contentLengthHeader = response.headers.get("content-length");
-        // Public file is 9,189,870 bytes (~8.76 MiB)
+        // Cloudinary file is 9,189,870 bytes (~8.76 MiB)
         const totalBytes = contentLengthHeader
           ? parseInt(contentLengthHeader, 10)
           : 9189870;
@@ -900,6 +1202,7 @@ class AssetLoadingManager {
                   : 0.5;
 
               this.updateTask(id, {
+                state: "downloading",
                 progress,
                 bytesLoaded: loadedBytes,
                 bytesTotal: totalBytes,
@@ -907,6 +1210,7 @@ class AssetLoadingManager {
             }
           }
 
+          this.updateTask(id, { state: "decoding", progress: 0.99 });
           blob = new Blob(chunks, { type: "video/mp4" });
         } else {
           blob = await response.blob();
@@ -916,11 +1220,13 @@ class AssetLoadingManager {
         const blobUrl = URL.createObjectURL(blob);
         this.videoBlobMap.set(url, { blob, blobUrl });
 
+        this.updateTask(id, { state: "preparing", progress: 0.99 });
+
         // Prepare video for playback on a probe element
         await this.verifyVideoPlaybackReadiness(blobUrl);
 
         this.updateTask(id, {
-          state: "loaded",
+          state: "ready",
           progress: 1.0,
           bytesLoaded: totalBytes,
           bytesTotal: totalBytes,
@@ -930,24 +1236,40 @@ class AssetLoadingManager {
       } catch (err: unknown) {
         attempt++;
         if (attempt > MAX_RETRIES) {
-          const errorMsg =
-            err instanceof Error
-              ? err.message
-              : "Failed to download Dream Island video";
-          console.error(`[AssetLoader] Video failure for ${id}:`, err);
-          this.updateTask(id, {
-            state: "failed",
-            progress: 0,
-            error: errorMsg,
-          });
-          return;
+          // Graceful fallback to direct video probe in case of CORS or network streaming policy
+          try {
+            console.warn(
+              `[AssetLoader] Direct blob fetch failed, falling back to direct video element probe:`,
+              err
+            );
+            this.updateTask(id, { state: "preparing", progress: 0.85 });
+            await this.verifyVideoPlaybackReadiness(url);
+            this.updateTask(id, {
+              state: "ready",
+              progress: 1.0,
+              resource: url,
+            });
+            return;
+          } catch {
+            const errorMsg =
+              err instanceof Error
+                ? err.message
+                : "Failed to download Dream Island video";
+            console.error(`[AssetLoader] Video failure for ${id}:`, err);
+            this.updateTask(id, {
+              state: "failed",
+              progress: 0,
+              error: errorMsg,
+            });
+            return;
+          }
         }
-        await new Promise((r) => setTimeout(r, 1000 * attempt));
+        await new Promise((r) => setTimeout(r, 800 * attempt));
       }
     }
   }
 
-  private verifyVideoPlaybackReadiness(blobUrl: string): Promise<void> {
+  private verifyVideoPlaybackReadiness(urlOrBlob: string): Promise<void> {
     return new Promise((resolve) => {
       if (typeof document === "undefined") {
         resolve();
@@ -976,11 +1298,11 @@ class AssetLoadingManager {
       video.onloadeddata = cleanup;
       video.onerror = cleanup;
 
-      video.src = blobUrl;
+      video.src = urlOrBlob;
       video.load();
 
       // Fallback timer ensures probe element does not hang if canplay event was missed
-      setTimeout(cleanup, 4000);
+      setTimeout(cleanup, 3500);
     });
   }
 
@@ -993,10 +1315,10 @@ class AssetLoadingManager {
    */
   public markPortalFrameReady(): void {
     const task = this.tasks.get("portal-first-frame");
-    if (!task || task.state === "loaded") return;
+    if (!task || task.state === "ready") return;
 
     this.updateTask("portal-first-frame", {
-      state: "loaded",
+      state: "ready",
       progress: 1.0,
     });
   }

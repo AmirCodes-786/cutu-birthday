@@ -29,7 +29,7 @@ export function CinematicPreloader({ onLoaded }: CinematicPreloaderProps) {
     return () => unsubscribe();
   }, []);
 
-  // Smoothly interpolate display percentage to match real progress
+  // Responsively interpolate display percentage to match real progress with 0 fake lag
   useEffect(() => {
     let animId: number;
     const target = progressData.percentage;
@@ -37,7 +37,7 @@ export function CinematicPreloader({ onLoaded }: CinematicPreloaderProps) {
     const animateStep = () => {
       setDisplayPercentage((prev) => {
         if (prev < target) {
-          const step = Math.max(1, Math.ceil((target - prev) * 0.15));
+          const step = Math.max(1, Math.ceil((target - prev) * 0.3));
           return Math.min(target, prev + step);
         } else if (prev > target) {
           return target;
@@ -66,8 +66,8 @@ export function CinematicPreloader({ onLoaded }: CinematicPreloaderProps) {
         setIsExiting(true);
         setTimeout(() => {
           onLoaded();
-        }, 850);
-      }, 400);
+        }, 650);
+      }, 200);
 
       return () => clearTimeout(timer);
     }
@@ -79,7 +79,7 @@ export function CinematicPreloader({ onLoaded }: CinematicPreloaderProps) {
         <motion.div
           initial={{ opacity: 1 }}
           exit={{ opacity: 0, scale: 1.02 }}
-          transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
           className="fixed inset-0 z-[100] flex flex-col items-center justify-between p-6 sm:p-10 bg-[#10051F] text-[#FFF1E6] select-none overflow-hidden"
         >
           {/* ========================================================
@@ -187,12 +187,12 @@ export function CinematicPreloader({ onLoaded }: CinematicPreloaderProps) {
               Preparing your universe...
             </h2>
 
-            {/* Rotating Dynamic Stage Supporting Message */}
+            {/* Rotating Dynamic Narrative Stage Supporting Message */}
             <motion.p
               key={progressData.stageMessage}
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
+              transition={{ duration: 0.35 }}
               className="text-xs sm:text-sm font-serif italic text-[#F5C77E] tracking-wider mb-8 drop-shadow-sm min-h-[1.5rem]"
             >
               {progressData.stageMessage}
@@ -208,7 +208,7 @@ export function CinematicPreloader({ onLoaded }: CinematicPreloaderProps) {
                 <motion.div
                   className="h-full rounded-full bg-gradient-to-r from-[#D95BCB] via-[#F28DBB] to-[#F5C77E] shadow-[0_0_12px_rgba(245,199,126,0.8)] relative will-change-[width]"
                   style={{ width: `${displayPercentage}%` }}
-                  transition={{ ease: "easeOut", duration: 0.2 }}
+                  transition={{ ease: "easeOut", duration: 0.15 }}
                 >
                   {/* Leading Edge Shimmer Beam */}
                   <span className="absolute right-0 top-0 bottom-0 w-3 bg-white/70 blur-[1px] rounded-full" />
@@ -225,10 +225,19 @@ export function CinematicPreloader({ onLoaded }: CinematicPreloaderProps) {
                 </span>
               </div>
 
-              {/* Current Asset Name Indicator */}
+              {/* Current Asset Name Indicator & Streamed Byte Counter */}
               <div className="flex items-center justify-center gap-1.5 text-[10px] text-[#D7A0A8]/80 font-mono tracking-tight truncate max-w-full px-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#D95BCB] shrink-0 animate-ping" />
-                <span className="truncate">Loading: {progressData.currentTaskName}</span>
+                <span className="truncate">
+                  {progressData.isComplete
+                    ? "Her Universe is ready"
+                    : `Loading: ${progressData.currentTaskName}`}
+                </span>
+                {progressData.bytesLoaded && progressData.bytesLoaded > 0 ? (
+                  <span className="text-[#F5C77E]/80 shrink-0 text-[9px]">
+                    ({(progressData.bytesLoaded / (1024 * 1024)).toFixed(1)} MB)
+                  </span>
+                ) : null}
               </div>
 
               {/* Recovery Banner: Shown strictly if required tasks fail */}
