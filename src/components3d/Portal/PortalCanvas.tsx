@@ -7,12 +7,14 @@ import { HeartPortal3D } from "./HeartPortal3D";
 import { Starfield3D } from "../Environment/Starfield3D";
 import { Fireflies3D } from "../Environment/Fireflies3D";
 import { CherryBlossomPetals } from "../Environment/CherryBlossomPetals";
+import { assetLoader } from "@/services/loadingManager";
 
 interface PortalCanvasProps {
   isEntering: boolean;
   onEnterComplete: () => void;
   onPortalClick: () => void;
   onPortalHover?: (hovered: boolean) => void;
+  onFirstFrame?: () => void;
 }
 
 function CameraRig({
@@ -113,11 +115,24 @@ function CameraRig({
   return null;
 }
 
+function FirstFrameReporter({ onFirstFrame }: { onFirstFrame?: () => void }) {
+  const signaled = useRef(false);
+  useFrame(() => {
+    if (!signaled.current) {
+      signaled.current = true;
+      assetLoader.markPortalFrameReady();
+      onFirstFrame?.();
+    }
+  });
+  return null;
+}
+
 export function PortalCanvas({
   isEntering,
   onEnterComplete,
   onPortalClick,
   onPortalHover,
+  onFirstFrame,
 }: PortalCanvasProps) {
   return (
     <div className="absolute inset-0 w-full h-full pointer-events-auto">
@@ -130,6 +145,7 @@ export function PortalCanvas({
         }}
         dpr={[1, 2]}
       >
+        <FirstFrameReporter onFirstFrame={onFirstFrame} />
         <ambientLight intensity={0.55} color="#392057" />
         <directionalLight
           position={[4, 6, 4]}

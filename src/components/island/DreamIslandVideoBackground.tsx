@@ -3,6 +3,7 @@
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import { motion, useMotionValue, animate } from "framer-motion";
 import { ASSETS } from "@/config/assetsConfig";
+import { assetLoader } from "@/services/loadingManager";
 
 export interface VideoBounds {
   width: number;
@@ -290,10 +291,10 @@ export function DreamIslandVideoBackground({
             }}
           />
 
-          {/* Single High-Performance Looping Video Player */}
+          {/* Single High-Performance Looping Video Player (Uses Pre-downloaded Blob Stream) */}
           <video
             ref={setVideoNode}
-            src={ASSETS.island.video}
+            src={assetLoader.getVideoBlobUrl(ASSETS.island.video) || ASSETS.island.video}
             poster={ASSETS.island.floatingIsland}
             autoPlay
             loop

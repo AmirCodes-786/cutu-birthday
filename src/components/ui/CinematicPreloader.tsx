@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { assetLoader, LoadingProgress } from "@/services/loadingManager";
-import { Sparkles, Heart } from "lucide-react";
+import { Sparkles, Heart, AlertCircle, RefreshCw } from "lucide-react";
 
 interface CinematicPreloaderProps {
   onLoaded: () => void;
@@ -230,6 +230,29 @@ export function CinematicPreloader({ onLoaded }: CinematicPreloaderProps) {
                 <span className="w-1.5 h-1.5 rounded-full bg-[#D95BCB] shrink-0 animate-ping" />
                 <span className="truncate">Loading: {progressData.currentTaskName}</span>
               </div>
+
+              {/* Recovery Banner: Shown strictly if required tasks fail */}
+              {progressData.hasErrors && progressData.failedRequiredCount > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex flex-col items-center gap-2 mt-3 p-3 rounded-xl bg-[#2A0E38]/90 border border-[#D95BCB]/40 shadow-lg"
+                >
+                  <div className="flex items-center gap-1.5 text-[11px] text-[#F8B7D0] font-mono text-center">
+                    <AlertCircle className="w-3.5 h-3.5 text-[#F5C77E] shrink-0" />
+                    <span>
+                      {progressData.failedRequiredCount} mandatory resource(s) delayed by network.
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => assetLoader.retryFailed()}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#66318D] hover:bg-[#853db9] border border-[#F5C77E]/60 text-[#F5C77E] text-[10.5px] font-mono uppercase tracking-wider transition-all cursor-pointer shadow-md hover:scale-105 active:scale-95"
+                  >
+                    <RefreshCw className="w-3 h-3 text-[#F5C77E]" />
+                    <span>Retry Connection</span>
+                  </button>
+                </motion.div>
+              )}
             </div>
           </main>
 

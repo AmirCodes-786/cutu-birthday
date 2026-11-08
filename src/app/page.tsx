@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ChapterId } from "@/config/siteConfig";
 import { SecretPortalScene } from "@/scenes/SecretPortal/SecretPortalScene";
 import { LoveLetterScene } from "@/scenes/LoveLetter/LoveLetterScene";
@@ -12,6 +12,7 @@ import { ChapterNav } from "@/components/navigation/ChapterNav";
 import { AudioPlayer } from "@/components/ui/AudioPlayer";
 import { SceneTransition } from "@/components/transitions/SceneTransition";
 import { CinematicPreloader } from "@/components/ui/CinematicPreloader";
+import { assetLoader } from "@/services/loadingManager";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Home() {
@@ -26,6 +27,17 @@ export default function Home() {
     "island",
     "finale",
   ]);
+
+  useEffect(() => {
+    const handleUnload = () => {
+      assetLoader.cleanup();
+    };
+    window.addEventListener("beforeunload", handleUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleUnload);
+      assetLoader.cleanup();
+    };
+  }, []);
 
   const handlePortalEnter = () => {
     setIsTransitioning(true);
