@@ -629,6 +629,7 @@ class AssetLoadingManager {
     while (attempt <= MAX_RETRIES) {
       try {
         const img = new window.Image();
+        img.crossOrigin = "anonymous";
 
         await new Promise<void>((resolve, reject) => {
           img.onload = () => resolve();
@@ -715,6 +716,7 @@ class AssetLoadingManager {
     while (attempt <= MAX_RETRIES) {
       try {
         const loader = new THREE.TextureLoader();
+        loader.setCrossOrigin("anonymous");
         const texture = await new Promise<THREE.Texture>((resolve, reject) => {
           loader.load(
             url,
