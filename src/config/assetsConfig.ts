@@ -7,35 +7,47 @@
 export const ASSETS = {
   // World 01 - The Secret Portal
   portal: {
-    cosmicNebula: "/images/optimized/cosmic-nebula.webp",
-    heartPortalRef: "/images/optimized/portal-heart.webp",
-    mobile: "/images/optimized/portal-heart-mobile.webp",
+    cosmicNebula:
+      "https://res.cloudinary.com/dzly2px6w/image/upload/v1794141560/Dreamy_Cosmic_Nebula_Over_a_Sea_of_Clouds_enscau.png",
+    heartPortalRef:
+      "https://res.cloudinary.com/dzly2px6w/image/upload/v1794141558/Celestial_Cherry_Blossom_Heart_Portal_pnh9ir.png",
+    mobile:
+      "https://res.cloudinary.com/dzly2px6w/image/upload/v1794141558/Celestial_Cherry_Blossom_Heart_Portal_pnh9ir.png",
   },
   // World 02 - The Love Letter
   letter: {
-    stillLife: "/images/optimized/letter-still-life.webp",
-    mobile: "/images/optimized/letter-still-life-mobile.webp",
+    stillLife:
+      "https://res.cloudinary.com/dzly2px6w/image/upload/v1794141561/Romantic_Love_Letter_Still_Life_zwlakd.png",
+    mobile:
+      "https://res.cloudinary.com/dzly2px6w/image/upload/v1794141561/Romantic_Love_Letter_Still_Life_zwlakd.png",
   },
   // World 03 - The Memory Galaxy (subtle cosmic nebula texture)
   galaxy: {
-    cosmicAtmosphere: "/images/optimized/galaxy-starry.webp",
-    mobile: "/images/optimized/galaxy-starry-mobile.webp",
+    cosmicAtmosphere:
+      "https://res.cloudinary.com/dzly2px6w/image/upload/v1794141560/Memory_Galaxy__Starry_Moments_fiqkmp.png",
+    mobile:
+      "https://res.cloudinary.com/dzly2px6w/image/upload/v1794141560/Memory_Galaxy__Starry_Moments_fiqkmp.png",
   },
   // World 04 - The Enchanted Garden of Reasons
   garden: {
-    roseGazebo: "/images/optimized/garden-gazebo.webp",
-    mobile: "/images/optimized/garden-gazebo-mobile.webp",
+    roseGazebo:
+      "https://res.cloudinary.com/dzly2px6w/image/upload/v1794141560/Moonlit_Rose_Garden_Gazebo_uhnltu.png",
+    mobile:
+      "https://res.cloudinary.com/dzly2px6w/image/upload/v1794141560/Moonlit_Rose_Garden_Gazebo_uhnltu.png",
   },
   // World 05 - The Dream Island
   island: {
     floatingIsland: "/images/optimized/island-floating.webp",
     mobile: "/images/optimized/island-floating-mobile.webp",
-    video: "/videos/dream-island.mp4",
+    video:
+      "https://res.cloudinary.com/dzly2px6w/video/upload/v1794140601/dream-island_gnsavq.mp4",
   },
   // World 06 - The Grand Birthday Finale
   finale: {
-    birthdayCelebration: "/images/optimized/birthday-celebration.webp",
-    mobile: "/images/optimized/birthday-celebration-mobile.webp",
+    birthdayCelebration:
+      "https://res.cloudinary.com/dzly2px6w/image/upload/v1794141564/Moonlit_Garden_Birthday_Celebration_tqflx4.png",
+    mobile:
+      "https://res.cloudinary.com/dzly2px6w/image/upload/v1794141564/Moonlit_Garden_Birthday_Celebration_tqflx4.png",
   },
   // Shared Transitions
   transitions: {
