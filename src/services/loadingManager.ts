@@ -650,6 +650,11 @@ class AssetLoadingManager {
           await img.decode();
         }
 
+        // Populate Three.js ImageLoader cache to guarantee zero duplicate network downloads
+        THREE.Cache.enabled = true;
+        THREE.Cache.add(`image:${url}`, img);
+        THREE.Cache.add(url, img);
+
         this.imageCache.set(url, img);
         this.updateTask(id, {
           state: "loaded",
