@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { ASSETS } from "@/config/assetsConfig";
+import { ASSETS, getSceneBackgroundUrl } from "@/config/assetsConfig";
 import { siteConfig } from "@/config/siteConfig";
 import { ArrowRight, Heart } from "lucide-react";
 import { CursorSparkles } from "@/components/ui/CursorSparkles";
@@ -76,7 +76,7 @@ export function SecretPortalScene({ onEnterUniverse }: SecretPortalSceneProps) {
         className="absolute inset-0 z-0 pointer-events-none"
       >
         <Image
-          src={ASSETS.portal.heartPortalRef}
+          src={getSceneBackgroundUrl("portal")}
           alt="Celestial Cherry Blossom Heart Portal"
           fill
           priority

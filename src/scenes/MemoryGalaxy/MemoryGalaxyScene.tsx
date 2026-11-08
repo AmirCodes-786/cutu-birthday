@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { motion, AnimatePresence, Variants } from "framer-motion";
-import { ASSETS } from "@/config/assetsConfig";
+import { getSceneBackgroundUrl } from "@/config/assetsConfig";
 import { memoriesConfig, MemoryItem } from "@/config/memoriesConfig";
 import { Heart, ChevronLeft, ChevronRight, X, ArrowRight, Camera, Star } from "lucide-react";
 import { CursorSparkles } from "@/components/ui/CursorSparkles";
@@ -173,7 +173,7 @@ export function MemoryGalaxyScene({
          ======================================================== */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <Image
-          src={ASSETS.galaxy.cosmicAtmosphere}
+          src={getSceneBackgroundUrl("galaxy")}
           alt="Cosmic Starry Nebula"
           fill
           className="object-cover object-center mix-blend-screen opacity-25"

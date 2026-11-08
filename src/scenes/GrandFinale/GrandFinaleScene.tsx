@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { ASSETS } from "@/config/assetsConfig";
+import { getSceneBackgroundUrl } from "@/config/assetsConfig";
 import { Heart, X, RotateCcw, Flame, MailOpen } from "lucide-react";
 import { CursorSparkles } from "@/components/ui/CursorSparkles";
 
@@ -103,7 +103,7 @@ export function GrandFinaleScene({
          ======================================================== */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <Image
-          src={ASSETS.finale.birthdayCelebration}
+          src={getSceneBackgroundUrl("finale")}
           alt="Moonlit Garden Birthday Celebration"
           fill
           className="object-cover object-center"

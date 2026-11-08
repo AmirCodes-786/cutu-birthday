@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, ArrowRight, ChevronLeft, ChevronRight, X, Flower } from "lucide-react";
-import { ASSETS } from "@/config/assetsConfig";
+import { getSceneBackgroundUrl } from "@/config/assetsConfig";
 import { reasonsConfig, ReasonItem } from "@/config/reasonsConfig";
 import { GardenBlossomNode } from "@/components/garden/GardenBlossomNode";
 
@@ -243,7 +243,7 @@ export function EnchantedGardenScene({
         className="absolute inset-[-2%] z-0 pointer-events-none"
       >
         <Image
-          src={ASSETS.garden.roseGazebo}
+          src={getSceneBackgroundUrl("garden")}
           alt="Moonlit Rose Garden Gazebo"
           fill
           sizes="100vw"

@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { ASSETS } from "@/config/assetsConfig";
+import { getSceneBackgroundUrl } from "@/config/assetsConfig";
 import { letterConfig } from "@/config/letterConfig";
 import { Heart, MailOpen, X, ArrowRight, RotateCcw } from "lucide-react";
 import { CursorSparkles } from "@/components/ui/CursorSparkles";
@@ -69,7 +69,7 @@ export function LoveLetterScene({
          ======================================================== */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <Image
-          src={ASSETS.letter.stillLife}
+          src={getSceneBackgroundUrl("letter")}
           alt="Romantic Love Letter and Envelope"
           fill
           className="object-cover object-[center_35%] sm:object-center"

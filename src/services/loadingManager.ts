@@ -18,7 +18,7 @@
 
 import * as THREE from "three";
 import { useTexture } from "@react-three/drei";
-import { ASSETS } from "@/config/assetsConfig";
+import { ASSETS, getSceneBackgroundUrl } from "@/config/assetsConfig";
 import { memoriesConfig } from "@/config/memoriesConfig";
 
 export type AssetType =
@@ -588,13 +588,13 @@ class AssetLoadingManager {
   private loadAllImages() {
     const imagesToLoad: Array<{ id: string; url: string }> = [
       { id: "transition-meadow", url: ASSETS.transitions.moonlitMeadow },
-      { id: "portal-heart", url: ASSETS.portal.heartPortalRef },
+      { id: "portal-heart", url: getSceneBackgroundUrl("portal") },
       { id: "portal-nebula", url: ASSETS.portal.cosmicNebula },
-      { id: "letter-still-life", url: ASSETS.letter.stillLife },
-      { id: "galaxy-atmosphere", url: ASSETS.galaxy.cosmicAtmosphere },
-      { id: "garden-gazebo", url: ASSETS.garden.roseGazebo },
+      { id: "letter-still-life", url: getSceneBackgroundUrl("letter") },
+      { id: "galaxy-atmosphere", url: getSceneBackgroundUrl("galaxy") },
+      { id: "garden-gazebo", url: getSceneBackgroundUrl("garden") },
       { id: "island-poster", url: ASSETS.island.floatingIsland },
-      { id: "finale-celebration", url: ASSETS.finale.birthdayCelebration },
+      { id: "finale-celebration", url: getSceneBackgroundUrl("finale") },
     ];
 
     memoriesConfig.memories.forEach((mem) => {
