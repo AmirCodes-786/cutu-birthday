@@ -307,6 +307,9 @@ function createTwineTexture(): THREE.CanvasTexture | null {
   return tex;
 }
 
+const _tempVecEnvelope = new THREE.Vector3();
+const _tempVecPaper = new THREE.Vector3();
+
 export function Envelope3D({ isOpen, onOpen, onHover }: Envelope3DProps) {
   const envelopeGroupRef = useRef<THREE.Group>(null);
   const topFlapPivotRef = useRef<THREE.Group>(null);
@@ -465,6 +468,43 @@ export function Envelope3D({ isOpen, onOpen, onHover }: Envelope3DProps) {
     return new THREE.TubeGeometry(curve, 20, 0.016, 8, false);
   }, []);
 
+  // Clean up procedural textures and extrude geometries on unmount
+  React.useEffect(() => {
+    return () => {
+      paperTex?.dispose();
+      paperBump?.dispose();
+      letterTex?.dispose();
+      sealTex?.dispose();
+      twineTex?.dispose();
+      leftFlapGeom.dispose();
+      rightFlapGeom.dispose();
+      bottomFlapGeom.dispose();
+      topFlapGeom.dispose();
+      organicSealGeom.dispose();
+      heartCharmGeom.dispose();
+      bowLeftGeom.dispose();
+      bowRightGeom.dispose();
+      twineTailLeftGeom.dispose();
+      twineTailRightGeom.dispose();
+    };
+  }, [
+    paperTex,
+    paperBump,
+    letterTex,
+    sealTex,
+    twineTex,
+    leftFlapGeom,
+    rightFlapGeom,
+    bottomFlapGeom,
+    topFlapGeom,
+    organicSealGeom,
+    heartCharmGeom,
+    bowLeftGeom,
+    bowRightGeom,
+    twineTailLeftGeom,
+    twineTailRightGeom,
+  ]);
+
   // 9. Interactive Physics & Fluid Animations
   useFrame((state, delta) => {
     const time = state.clock.getElapsedTime();
@@ -494,8 +534,9 @@ export function Envelope3D({ isOpen, onOpen, onHover }: Envelope3DProps) {
         4.2,
         delta
       );
+      _tempVecEnvelope.set(targetScale, targetScale, targetScale);
       envelopeGroupRef.current.scale.lerp(
-        new THREE.Vector3(targetScale, targetScale, targetScale),
+        _tempVecEnvelope,
         0.08
       );
     }
@@ -536,8 +577,9 @@ export function Envelope3D({ isOpen, onOpen, onHover }: Envelope3DProps) {
         3.2,
         delta
       );
+      _tempVecPaper.set(targetPaperScale, targetPaperScale, 1);
       paperRef.current.scale.lerp(
-        new THREE.Vector3(targetPaperScale, targetPaperScale, 1),
+        _tempVecPaper,
         0.07
       );
     }

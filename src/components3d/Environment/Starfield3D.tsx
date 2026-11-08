@@ -140,17 +140,19 @@ export function Starfield3D() {
       const positions = shootingGeom.attributes.position.array as Float32Array;
       if (star.active) {
         const head = star.position;
-        const tail = star.position
-          .clone()
-          .sub(star.velocity.clone().normalize().multiplyScalar(star.length));
+        const velLen = star.velocity.length() || 1;
+        const normFactor = star.length / velLen;
+        const tailX = star.position.x - star.velocity.x * normFactor;
+        const tailY = star.position.y - star.velocity.y * normFactor;
+        const tailZ = star.position.z - star.velocity.z * normFactor;
 
         positions[index * 6] = head.x;
         positions[index * 6 + 1] = head.y;
         positions[index * 6 + 2] = head.z;
 
-        positions[index * 6 + 3] = tail.x;
-        positions[index * 6 + 4] = tail.y;
-        positions[index * 6 + 5] = tail.z;
+        positions[index * 6 + 3] = tailX;
+        positions[index * 6 + 4] = tailY;
+        positions[index * 6 + 5] = tailZ;
       } else {
         // Place off-screen
         positions[index * 6] = 9999;
@@ -187,6 +189,14 @@ export function Starfield3D() {
     tex.needsUpdate = true;
     return tex;
   }, []);
+
+  // Clean up procedural texture and geometry on unmount
+  React.useEffect(() => {
+    return () => {
+      shootingGeom.dispose();
+      stardustTexture?.dispose();
+    };
+  }, [shootingGeom, stardustTexture]);
 
   return (
     <group>

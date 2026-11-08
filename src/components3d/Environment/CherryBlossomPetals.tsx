@@ -70,23 +70,12 @@ export function CherryBlossomPetals({ count = 90 }: { count?: number }) {
     return array;
   }, [count]);
 
-  // Color palette for instanced petals
-  const colors = useMemo(() => {
-    const palette = [
-      new THREE.Color("#F8B7D0"), // Blush Pink
-      new THREE.Color("#F28DBB"), // Romantic Pink
-      new THREE.Color("#D7A0A8"), // Rose Gold
-      new THREE.Color("#FFF1E6"), // Soft Ivory Pink
-    ];
-    const colorArray = new Float32Array(count * 3);
-    for (let i = 0; i < count; i++) {
-      const c = palette[i % palette.length];
-      colorArray[i * 3] = c.r;
-      colorArray[i * 3 + 1] = c.g;
-      colorArray[i * 3 + 2] = c.b;
-    }
-    return colorArray;
-  }, [count]);
+  // Clean up geometry on unmount
+  React.useEffect(() => {
+    return () => {
+      petalGeometry.dispose();
+    };
+  }, [petalGeometry]);
 
   useFrame((state, delta) => {
     if (!meshRef.current) return;

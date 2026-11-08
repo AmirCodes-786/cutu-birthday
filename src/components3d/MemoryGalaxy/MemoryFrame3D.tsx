@@ -15,6 +15,8 @@ interface MemoryFrame3DProps {
   onSelect: (memory: MemoryItem, index: number) => void;
 }
 
+const _tempVecFrame = new THREE.Vector3();
+
 export function MemoryFrame3D({
   memory,
   position,
@@ -29,25 +31,26 @@ export function MemoryFrame3D({
   const [hovered, setHovered] = useState(false);
   const { gl } = useThree();
 
-  // Load image texture with 4K anisotropic filtering
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+  const targetAnisotropy = Math.min(gl.capabilities.getMaxAnisotropy(), isMobile ? 4 : 8);
+
+  // Load image texture with sensible anisotropic filtering
   const texture = useTexture(memory.image, (tex) => {
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.generateMipmaps = true;
     tex.minFilter = THREE.LinearMipmapLinearFilter;
     tex.magFilter = THREE.LinearFilter;
-    const maxAnisotropy = gl.capabilities.getMaxAnisotropy();
-    tex.anisotropy = maxAnisotropy || 16;
+    tex.anisotropy = targetAnisotropy;
     tex.needsUpdate = true;
   });
 
   useEffect(() => {
     if (texture) {
       texture.colorSpace = THREE.SRGBColorSpace;
-      const maxAnisotropy = gl.capabilities.getMaxAnisotropy();
-      texture.anisotropy = maxAnisotropy || 16;
+      texture.anisotropy = targetAnisotropy;
       texture.needsUpdate = true;
     }
-  }, [texture, gl]);
+  }, [texture, targetAnisotropy]);
 
   // Proportional frame dimensions: Central featured memory is ~1.36x larger
   // Slim champagne-gold and rose-gold borders with zero face cropping
@@ -118,8 +121,9 @@ export function MemoryFrame3D({
         delta
       );
 
+      _tempVecFrame.set(targetScale, targetScale, targetScale);
       groupRef.current.scale.lerp(
-        new THREE.Vector3(targetScale, targetScale, targetScale),
+        _tempVecFrame,
         0.1
       );
     }
@@ -216,14 +220,16 @@ export function MemoryFrame3D({
         </mesh>
       ))}
 
-      {/* 6. Local Restrained Warm Starlight Point Light */}
-      <pointLight
-        ref={lightRef}
-        color={isFeatured ? "#F5C77E" : "#D7A0A8"}
-        distance={isFeatured ? 3.5 : 2.5}
-        decay={2}
-        position={[0, 0, 0.45]}
-      />
+      {/* 6. Local Restrained Warm Starlight Point Light (Featured or hovered frame) */}
+      {(isFeatured || hovered) && (
+        <pointLight
+          ref={lightRef}
+          color={isFeatured ? "#F5C77E" : "#D7A0A8"}
+          distance={isFeatured ? 3.5 : 2.5}
+          decay={2}
+          position={[0, 0, 0.45]}
+        />
+      )}
     </group>
   );
 }

@@ -13,7 +13,17 @@ interface Cake3DProps {
 }
 
 // -------------------------------------------------------------------
-// 1. Procedural Petite Sculpted Rose
+// Shared Reusable Geometries (Cuts VRAM allocations and draw overhead)
+// -------------------------------------------------------------------
+const rosePetalGeom = new THREE.SphereGeometry(1, 10, 8);
+const roseLeafGeom = new THREE.SphereGeometry(1, 8, 6);
+const dripCylinderGeom = new THREE.CylinderGeometry(1, 0.8, 1, 10);
+const dripSphereGeom = new THREE.SphereGeometry(1, 8, 8);
+const pearlSphereGeom = new THREE.SphereGeometry(1, 8, 8);
+const flakePlaneGeom = new THREE.PlaneGeometry(1, 1);
+
+// -------------------------------------------------------------------
+// 1. Procedural Petite Sculpted Rose (Shared Geometries)
 // -------------------------------------------------------------------
 function PetiteRose({
   position,
@@ -53,8 +63,7 @@ function PetiteRose({
   return (
     <group position={position} rotation={rotation} scale={scale}>
       {petals.map((p, i) => (
-        <mesh key={i} position={p.pos} rotation={p.rot} scale={p.sz}>
-          <sphereGeometry args={[1, 12, 10]} />
+        <mesh key={i} position={p.pos} rotation={p.rot} scale={p.sz} geometry={rosePetalGeom}>
           <meshStandardMaterial
             color={color}
             roughness={0.35}
@@ -63,13 +72,11 @@ function PetiteRose({
         </mesh>
       ))}
 
-      {/* Tender Fondant Leaves */}
-      <mesh position={[-0.03, -0.005, -0.018]} rotation={[0.4, 0.7, -0.3]} scale={[0.03, 0.006, 0.048]}>
-        <sphereGeometry args={[1, 10, 8]} />
+      {/* Tender Fondant Leaves (Shared Geometry) */}
+      <mesh position={[-0.03, -0.005, -0.018]} rotation={[0.4, 0.7, -0.3]} scale={[0.03, 0.006, 0.048]} geometry={roseLeafGeom}>
         <meshStandardMaterial color="#2D6A4F" roughness={0.35} metalness={0.05} />
       </mesh>
-      <mesh position={[0.035, -0.005, 0.016]} rotation={[-0.3, -1.0, 0.2]} scale={[0.028, 0.006, 0.042]}>
-        <sphereGeometry args={[1, 10, 8]} />
+      <mesh position={[0.035, -0.005, 0.016]} rotation={[-0.3, -1.0, 0.2]} scale={[0.028, 0.006, 0.042]} geometry={roseLeafGeom}>
         <meshStandardMaterial color="#40916C" roughness={0.35} metalness={0.05} />
       </mesh>
     </group>
@@ -200,8 +207,7 @@ function DrippingGlazeRing({
         const z = Math.sin(d.angle) * (radius + 0.006);
         return (
           <group key={i} position={[x, -d.length * 0.5, z]}>
-            <mesh scale={[d.width, d.length, d.width]}>
-              <cylinderGeometry args={[1, 0.8, 1, 10]} />
+            <mesh scale={[d.width, d.length, d.width]} geometry={dripCylinderGeom}>
               <meshPhysicalMaterial
                 color={glazeColor}
                 roughness={0.08}
@@ -209,8 +215,7 @@ function DrippingGlazeRing({
                 clearcoatRoughness={0.05}
               />
             </mesh>
-            <mesh position={[0, -d.length * 0.5, 0]} scale={[d.width * 1.15, d.width * 1.35, d.width * 1.15]}>
-              <sphereGeometry args={[1, 10, 10]} />
+            <mesh position={[0, -d.length * 0.5, 0]} scale={[d.width * 1.15, d.width * 1.35, d.width * 1.15]} geometry={dripSphereGeom}>
               <meshPhysicalMaterial
                 color={glazeColor}
                 roughness={0.08}
@@ -222,6 +227,115 @@ function DrippingGlazeRing({
         );
       })}
     </group>
+  );
+}
+
+// -------------------------------------------------------------------
+// Instanced Fondant Pearls (Collapses 56 draw calls into 1)
+// -------------------------------------------------------------------
+function FondantPearlsInstanced({
+  basePearls,
+  midPearls,
+}: {
+  basePearls: [number, number, number][];
+  midPearls: [number, number, number][];
+}) {
+  const meshRef = useRef<THREE.InstancedMesh>(null);
+  const total = basePearls.length + midPearls.length;
+
+  React.useEffect(() => {
+    if (!meshRef.current) return;
+    const dummy = new THREE.Object3D();
+    let idx = 0;
+    basePearls.forEach((p) => {
+      dummy.position.set(p[0], p[1], p[2]);
+      dummy.scale.set(0.018, 0.018, 0.018);
+      dummy.updateMatrix();
+      meshRef.current!.setMatrixAt(idx++, dummy.matrix);
+    });
+    midPearls.forEach((p) => {
+      dummy.position.set(p[0], p[1], p[2]);
+      dummy.scale.set(0.016, 0.016, 0.016);
+      dummy.updateMatrix();
+      meshRef.current!.setMatrixAt(idx++, dummy.matrix);
+    });
+    meshRef.current.instanceMatrix.needsUpdate = true;
+  }, [basePearls, midPearls]);
+
+  return (
+    <instancedMesh ref={meshRef} args={[pearlSphereGeom, undefined, total]}>
+      <meshPhysicalMaterial
+        color="#F5C77E"
+        metalness={0.7}
+        roughness={0.2}
+        clearcoat={0.8}
+      />
+    </instancedMesh>
+  );
+}
+
+// -------------------------------------------------------------------
+// Instanced Top Rim Rosettes (Collapses 14 draw calls into 1)
+// -------------------------------------------------------------------
+function TopRosettesInstanced({ count = 14, radius = 0.31, y = 0.895 }: { count?: number; radius?: number; y?: number }) {
+  const meshRef = useRef<THREE.InstancedMesh>(null);
+
+  React.useEffect(() => {
+    if (!meshRef.current) return;
+    const dummy = new THREE.Object3D();
+    for (let i = 0; i < count; i++) {
+      const a = (i / count) * Math.PI * 2;
+      dummy.position.set(Math.cos(a) * radius, y, Math.sin(a) * radius);
+      dummy.scale.set(0.019, 0.019, 0.019);
+      dummy.updateMatrix();
+      meshRef.current.setMatrixAt(i, dummy.matrix);
+    }
+    meshRef.current.instanceMatrix.needsUpdate = true;
+  }, [count, radius, y]);
+
+  return (
+    <instancedMesh ref={meshRef} args={[pearlSphereGeom, undefined, count]}>
+      <meshPhysicalMaterial
+        color="#FFF0F5"
+        roughness={0.25}
+        clearcoat={0.75}
+      />
+    </instancedMesh>
+  );
+}
+
+// -------------------------------------------------------------------
+// Instanced Gold Leaf Accents (Collapses 24 draw calls into 1)
+// -------------------------------------------------------------------
+function GoldFlakesInstanced({
+  flakes,
+}: {
+  flakes: { pos: [number, number, number]; rot: [number, number, number]; sz: number }[];
+}) {
+  const meshRef = useRef<THREE.InstancedMesh>(null);
+
+  React.useEffect(() => {
+    if (!meshRef.current) return;
+    const dummy = new THREE.Object3D();
+    flakes.forEach((f, i) => {
+      dummy.position.set(f.pos[0], f.pos[1], f.pos[2]);
+      dummy.rotation.set(f.rot[0], f.rot[1], f.rot[2]);
+      dummy.scale.set(f.sz, f.sz, f.sz);
+      dummy.updateMatrix();
+      meshRef.current!.setMatrixAt(i, dummy.matrix);
+    });
+    meshRef.current.instanceMatrix.needsUpdate = true;
+  }, [flakes]);
+
+  return (
+    <instancedMesh ref={meshRef} args={[flakePlaneGeom, undefined, flakes.length]}>
+      <meshStandardMaterial
+        color="#FFD700"
+        metalness={0.9}
+        roughness={0.15}
+        side={THREE.DoubleSide}
+      />
+    </instancedMesh>
   );
 }
 
@@ -409,19 +523,6 @@ export function Cake3D({
       {/* Tier 1 White Chocolate Dripping Glaze */}
       <DrippingGlazeRing radius={0.68} y={0.35} dripCount={20} glazeColor="#FFFDF9" />
 
-      {/* Tier 1 Base Sugar Pearls (Champagne-Gold Luster) */}
-      {basePearls.map((p, i) => (
-        <mesh key={`p1-${i}`} position={p} scale={0.018}>
-          <sphereGeometry args={[1, 10, 10]} />
-          <meshPhysicalMaterial
-            color="#F5C77E"
-            metalness={0.7}
-            roughness={0.2}
-            clearcoat={0.8}
-          />
-        </mesh>
-      ))}
-
       {/* ========================================================
           TIER 2 (MIDDLE TIER): Warm Vanilla Bean Velvet Buttercream
           Proportions: 0.48 radius, 0.30 height
@@ -439,18 +540,8 @@ export function Cake3D({
       {/* Tier 2 Ruby Raspberry Coulis Dripping Mirror Glaze */}
       <DrippingGlazeRing radius={0.48} y={0.66} dripCount={16} glazeColor="#C9184A" />
 
-      {/* Tier 2 Base Fondant Pearls */}
-      {midPearls.map((p, i) => (
-        <mesh key={`p2-${i}`} position={p} scale={0.016}>
-          <sphereGeometry args={[1, 10, 10]} />
-          <meshPhysicalMaterial
-            color="#F5C77E"
-            metalness={0.7}
-            roughness={0.2}
-            clearcoat={0.8}
-          />
-        </mesh>
-      ))}
+      {/* Combined Tier 1 & Tier 2 Instanced Fondant Sugar Pearls */}
+      <FondantPearlsInstanced basePearls={basePearls} midPearls={midPearls} />
 
       {/* ========================================================
           TIER 3 (TOP TIER): Strawberry-Lavender Velvet Buttercream
@@ -469,37 +560,11 @@ export function Cake3D({
       {/* Tier 3 White Cream Frosting Glaze */}
       <DrippingGlazeRing radius={0.31} y={0.89} dripCount={12} glazeColor="#FFFDF9" />
 
-      {/* Top Tier Rim Rosettes */}
-      {Array.from({ length: 14 }).map((_, i) => {
-        const a = (i / 14) * Math.PI * 2;
-        return (
-          <mesh
-            key={`top-rosette-${i}`}
-            position={[Math.cos(a) * 0.31, 0.895, Math.sin(a) * 0.31]}
-            scale={0.019}
-          >
-            <sphereGeometry args={[1, 10, 10]} />
-            <meshPhysicalMaterial
-              color="#FFF0F5"
-              roughness={0.25}
-              clearcoat={0.75}
-            />
-          </mesh>
-        );
-      })}
+      {/* Instanced Top Tier Rim Rosettes */}
+      <TopRosettesInstanced count={14} radius={0.31} y={0.895} />
 
-      {/* Fine 24k Gold Leaf Accents */}
-      {goldFlakes.map((f, i) => (
-        <mesh key={`flake-${i}`} position={f.pos} rotation={f.rot} scale={f.sz}>
-          <planeGeometry args={[1, 1]} />
-          <meshStandardMaterial
-            color="#FFD700"
-            metalness={0.9}
-            roughness={0.15}
-            side={THREE.DoubleSide}
-          />
-        </mesh>
-      ))}
+      {/* Instanced Fine 24k Gold Leaf Accents */}
+      <GoldFlakesInstanced flakes={goldFlakes} />
 
       {/* ========================================================
           HANDCRAFTED ARTISAN PATISSERIE TOPPINGS

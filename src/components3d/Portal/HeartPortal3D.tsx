@@ -17,6 +17,8 @@ interface HeartPortal3DProps {
  * 2. Dynamic pulsating champagne and orchid point lights that react to hover.
  * 3. Smooth camera plunge on enter.
  */
+const _enterScale = new THREE.Vector3(2.5, 2.5, 2.5);
+
 export function HeartPortal3D({
   isEntering = false,
   onHover,
@@ -65,7 +67,7 @@ export function HeartPortal3D({
       groupRef.current.position.y = 0.2 + Math.sin(time * 1.2) * 0.04;
 
       if (isEntering) {
-        groupRef.current.scale.lerp(new THREE.Vector3(2.5, 2.5, 2.5), 0.08);
+        groupRef.current.scale.lerp(_enterScale, 0.08);
       }
     }
 

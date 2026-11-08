@@ -97,6 +97,14 @@ export function SunsetPetals3D({ count = 38 }: { count?: number }) {
     return tex;
   }, []);
 
+  // Clean up geometry and procedural texture on unmount
+  React.useEffect(() => {
+    return () => {
+      petalGeometry.dispose();
+      petalTexture?.dispose();
+    };
+  }, [petalGeometry, petalTexture]);
+
   const petals = useMemo<PetalData[]>(() => {
     return Array.from({ length: count }).map(() => ({
       x: (Math.random() - 0.5) * 14,

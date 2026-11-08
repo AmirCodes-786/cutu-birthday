@@ -134,6 +134,8 @@ export function PortalCanvas({
   onPortalHover,
   onFirstFrame,
 }: PortalCanvasProps) {
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+
   return (
     <div className="absolute inset-0 w-full h-full pointer-events-auto">
       <Canvas
@@ -142,8 +144,10 @@ export function PortalCanvas({
           antialias: true,
           alpha: true,
           powerPreference: "high-performance",
+          stencil: false,
+          depth: true,
         }}
-        dpr={[1, 2]}
+        dpr={isMobile ? [1, 1.35] : [1, 1.75]}
       >
         <FirstFrameReporter onFirstFrame={onFirstFrame} />
         <ambientLight intensity={0.55} color="#392057" />

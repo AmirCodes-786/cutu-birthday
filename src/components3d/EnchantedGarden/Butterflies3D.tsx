@@ -33,6 +33,12 @@ export function Butterflies3D({ count = 5 }: { count?: number }) {
     return geom;
   }, []);
 
+  React.useEffect(() => {
+    return () => {
+      wingGeometry.dispose();
+    };
+  }, [wingGeometry]);
+
   const butterflyData = useMemo<ButterflyData[]>(() => {
     const list: ButterflyData[] = [];
     const colors = ["#F28DBB", "#F5C77E", "#D95BCB", "#FFF1E6", "#F8B7D0"];

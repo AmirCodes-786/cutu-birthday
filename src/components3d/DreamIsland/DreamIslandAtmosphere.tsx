@@ -54,8 +54,10 @@ export function DreamIslandAtmosphere({ isMobile }: DreamIslandAtmosphereProps) 
           antialias: true,
           alpha: true,
           powerPreference: "high-performance",
+          stencil: false,
+          depth: true,
         }}
-        dpr={[1, 2]}
+        dpr={isMobile ? [1, 1.25] : [1, 1.75]}
       >
         {/* Clean, pure warm twilight lighting that preserves petal blossom colors */}
         <ambientLight intensity={0.8} color="#FFF0F5" />

@@ -145,8 +145,10 @@ export function MemoryGalaxyCanvas({
           antialias: true,
           alpha: true,
           powerPreference: "high-performance",
+          stencil: false,
+          depth: true,
         }}
-        dpr={[1, 2.5]}
+        dpr={isMobile ? [1, 1.35] : [1, 1.75]}
       >
         <ambientLight intensity={0.9} color="#392057" />
         <directionalLight

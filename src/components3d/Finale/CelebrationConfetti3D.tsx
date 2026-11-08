@@ -98,6 +98,27 @@ export function CelebrationConfetti3D({ active, isMobile = false }: CelebrationC
 
   const dummy = useMemo(() => new THREE.Object3D(), []);
 
+  // Initialize static instance colors once (avoids re-uploading color buffer on every frame)
+  React.useEffect(() => {
+    if (!active) return;
+    if (meshRef.current) {
+      foils.forEach((p, i) => {
+        meshRef.current?.setColorAt(i, p.color);
+      });
+      if (meshRef.current.instanceColor) {
+        meshRef.current.instanceColor.needsUpdate = true;
+      }
+    }
+    if (petalMeshRef.current) {
+      petals.forEach((p, i) => {
+        petalMeshRef.current?.setColorAt(i, p.color);
+      });
+      if (petalMeshRef.current.instanceColor) {
+        petalMeshRef.current.instanceColor.needsUpdate = true;
+      }
+    }
+  }, [active, foils, petals]);
+
   useFrame((_, delta) => {
     if (!active) return;
 
@@ -128,13 +149,9 @@ export function CelebrationConfetti3D({ active, isMobile = false }: CelebrationC
         dummy.updateMatrix();
 
         meshRef.current?.setMatrixAt(i, dummy.matrix);
-        meshRef.current?.setColorAt(i, p.color);
       });
 
       meshRef.current.instanceMatrix.needsUpdate = true;
-      if (meshRef.current.instanceColor) {
-        meshRef.current.instanceColor.needsUpdate = true;
-      }
     }
 
     // Animate Flower Petals (gentle swaying flutter)
@@ -162,13 +179,9 @@ export function CelebrationConfetti3D({ active, isMobile = false }: CelebrationC
         dummy.updateMatrix();
 
         petalMeshRef.current?.setMatrixAt(i, dummy.matrix);
-        petalMeshRef.current?.setColorAt(i, p.color);
       });
 
       petalMeshRef.current.instanceMatrix.needsUpdate = true;
-      if (petalMeshRef.current.instanceColor) {
-        petalMeshRef.current.instanceColor.needsUpdate = true;
-      }
     }
   });
 

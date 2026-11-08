@@ -62,6 +62,8 @@ function CameraRig({ isOpen }: { isOpen: boolean }) {
 }
 
 export function EnvelopeCanvas({ isOpen, onOpen, onHover }: EnvelopeCanvasProps) {
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+
   return (
     <div className="absolute inset-0 w-full h-full pointer-events-auto">
       <Canvas
@@ -70,8 +72,10 @@ export function EnvelopeCanvas({ isOpen, onOpen, onHover }: EnvelopeCanvasProps)
           antialias: true,
           alpha: true,
           powerPreference: "high-performance",
+          stencil: false,
+          depth: true,
         }}
-        dpr={[1, 2]}
+        dpr={isMobile ? [1, 1.35] : [1, 1.75]}
       >
         {/* Soft Warm Candle Ambient Light */}
         <ambientLight intensity={0.8} color="#FFF1E6" />

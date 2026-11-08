@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useSpring } from "framer-motion";
 import { Heart, ArrowRight, ChevronLeft, ChevronRight, X, Flower } from "lucide-react";
 import { getSceneBackgroundUrl } from "@/config/assetsConfig";
 import { reasonsConfig, ReasonItem } from "@/config/reasonsConfig";
@@ -59,7 +59,10 @@ export function EnchantedGardenScene({
   const [selectedReason, setSelectedReason] = useState<ReasonItem | null>(null);
   const [discoveredIds, setDiscoveredIds] = useState<number[]>([1]); // First reason discovered by default
   const [isMobile, setIsMobile] = useState(false);
-  const [parallax, setParallax] = useState({ x: 0, y: 0 });
+  const motionX = useMotionValue(0);
+  const motionY = useMotionValue(0);
+  const smoothX = useSpring(motionX, { stiffness: 70, damping: 22 });
+  const smoothY = useSpring(motionY, { stiffness: 70, damping: 22 });
   const [slideDirection, setSlideDirection] = useState<1 | -1>(1);
   const [cherishCounts, setCherishCounts] = useState<{ [id: number]: number }>({});
   const [floatingHearts, setFloatingHearts] = useState<FloatingHeart[]>([]);
@@ -89,17 +92,19 @@ export function EnchantedGardenScene({
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // Smooth mouse parallax for the living canvas
+  // Smooth GPU-accelerated mouse parallax for the living canvas (0 React re-renders)
   useEffect(() => {
+    if (isMobile) return;
     const handleMouseMove = (e: MouseEvent) => {
-      const px = (e.clientX / window.innerWidth - 0.5) * 20;
-      const py = (e.clientY / window.innerHeight - 0.5) * 12;
-      setParallax({ x: px, y: py });
+      const px = -(e.clientX / window.innerWidth - 0.5) * 20;
+      const py = -(e.clientY / window.innerHeight - 0.5) * 12;
+      motionX.set(px);
+      motionY.set(py);
     };
 
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
     return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, []);
+  }, [isMobile, motionX, motionY]);
 
   const handleSelectReason = useCallback((reason: ReasonItem, dir: 1 | -1 = 1) => {
     setSlideDirection(dir);
@@ -234,12 +239,11 @@ export function EnchantedGardenScene({
           with smooth interactive depth parallax
          ======================================================== */}
       <motion.div
-        animate={{
-          x: -parallax.x,
-          y: -parallax.y,
+        style={{
+          x: smoothX,
+          y: smoothY,
           scale: 1.05,
         }}
-        transition={{ ease: "easeOut", duration: 0.8 }}
         className="absolute inset-[-2%] z-0 pointer-events-none"
       >
         <Image

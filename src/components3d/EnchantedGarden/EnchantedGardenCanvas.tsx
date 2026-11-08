@@ -57,8 +57,10 @@ export function EnchantedGardenCanvas({ isMobile }: EnchantedGardenCanvasProps) 
           antialias: true,
           alpha: true,
           powerPreference: "high-performance",
+          stencil: false,
+          depth: true,
         }}
-        dpr={[1, 2]}
+        dpr={isMobile ? [1, 1.35] : [1, 1.75]}
       >
         {/* Soft Ambient Moonlit Garden Lighting */}
         <ambientLight intensity={0.6} color="#351D4D" />
